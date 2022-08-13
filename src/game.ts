@@ -53,8 +53,7 @@ export class Game {
 
         this.stage.draw(canvas, this.bmpBase);
 
-        canvas.drawBitmap(this.bmpBase, 64, 64)
-              .drawText(this.bmpFontSmall, "Alpha 0.0.1",  -6, -4, -17, 0, TextAlign.Left);;
+        canvas.drawText(this.bmpFontSmall, "Alpha 0.0.1",  -6, -4, -17, 0, TextAlign.Left);;
     }
 
 }
