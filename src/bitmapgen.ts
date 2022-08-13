@@ -155,7 +155,7 @@ export const convert2BitImageToRGB222 = (ctx : CanvasRenderingContext2D,
 
 export const loadBitmapRGB222 = (path : string, 
     lookup : RGB222LookupTable, palette : Array<number[]>,
-    callback : (bmp : Bitmap) => void) : Bitmap => {
+    callback : () => void) : Bitmap => {
 
     let image = document.createElement('img');
     let canvas = document.createElement("canvas");
@@ -169,7 +169,7 @@ export const loadBitmapRGB222 = (path : string,
         ctx.drawImage(image, 0, 0);
 
         convert2BitImageToRGB222(ctx, canvas.width, canvas.height, lookup, palette);
-        callback(image);
+        callback();
     }
     image.src = path;
 
