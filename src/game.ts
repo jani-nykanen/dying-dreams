@@ -18,6 +18,8 @@ export class Game {
 
     private loaded = false;
 
+    private backgroundTimer : number = 0.0;
+
 
     constructor(event : CoreEvent) {
 
@@ -29,18 +31,41 @@ export class Game {
 
             this.loaded = true;
         });
-        this.bmpBackground = createBackgroundBitmap(160, 144);
+        this.bmpBackground = createBackgroundBitmap(160, 160, 8);
         this.bmpFontSmall = generateFont("12px Arial", 24, 24, 2, 8, 127);
 
         this.stage = new Stage(LEVEL_DATA[0]);
     }
 
 
+    private drawBackground(canvas : Canvas) : void {
+
+        let bmp = this.bmpBackground;
+
+        let offy = 4; // Math.abs(canvas.height - bmp.height) / 2;
+
+        let amplitude = offy;
+        let perioud = Math.PI*4 / bmp.width;
+
+        let dy : number;
+
+        for (let dx = 0; dx < bmp.width; ++ dx) {
+
+            dy = Math.round(Math.sin(this.backgroundTimer + perioud*dx) * amplitude);
+            canvas.drawBitmapRegion(bmp, dx, dy + offy, 1, canvas.height, dx, 0);
+        }
+    }
+
+
     public update(event : CoreEvent) : void {
+
+        const BACKGROUND_SPEED = 0.025;
 
         if (!this.loaded) return;
 
         this.stage.update(event);
+
+        this.backgroundTimer = (this.backgroundTimer + BACKGROUND_SPEED*event.step) % (Math.PI*2);
     }
 
 
@@ -52,11 +77,10 @@ export class Game {
             return;
         }
 
-        canvas.drawBitmap(this.bmpBackground, 0, 0);
-
+        this.drawBackground(canvas);
         this.stage.draw(canvas, this.bmpBase);
 
-        canvas.drawText(this.bmpFontSmall, "Alpha 0.0.1",  -6, -4, -17, 0, TextAlign.Left);;
+        // canvas.drawText(this.bmpFontSmall, "Alpha 0.0.1",  -6, -4, -17, 0, TextAlign.Left);;
     }
 
 }
