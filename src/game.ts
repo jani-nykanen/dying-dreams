@@ -1,3 +1,4 @@
+import { createBackgroundBackLayer, createBackgroundMiddleLayer } from "./background.js";
 import { generateFont, generateRGB222LookupTable, loadBitmapRGB222 } from "./bitmapgen.js";
 import { Bitmap, Canvas, TextAlign } from "./canvas.js";
 import { CoreEvent } from "./core.js";
@@ -12,6 +13,8 @@ export class Game {
     private stage : Stage;
 
     private bmpBase : Bitmap;
+    private bmpSky : Bitmap;
+    private bmpForest : Bitmap;
     private bmpFontSmall : Bitmap | null = null;
 
     private loaded = false;
@@ -27,6 +30,8 @@ export class Game {
 
             this.loaded = true;
         });
+        this.bmpSky = createBackgroundBackLayer(160, 144);
+        this.bmpForest = createBackgroundMiddleLayer(160, 72);
         this.bmpFontSmall = generateFont("12px Arial", 24, 24, 2, 8, 127);
 
         this.stage = new Stage(LEVEL_DATA[0]);
@@ -49,7 +54,8 @@ export class Game {
             return;
         }
 
-        canvas.clear(170, 85, 255);  
+        canvas.drawBitmap(this.bmpSky, 0, 0)
+              .drawBitmap(this.bmpForest, 0, canvas.height - this.bmpForest.height);  
 
         this.stage.draw(canvas, this.bmpBase);
 
