@@ -185,7 +185,7 @@ export class Canvas {
     }
 
 
-    public drawBitmap(bmp : Bitmap | null, dx : number, dy : number, flip = Flip.None) : Canvas {
+    public drawBitmap(bmp : Bitmap | null, dx = 0.0, dy = 0.0, flip = Flip.None) : Canvas {
 
         if (bmp == null)
             return this;
