@@ -1,4 +1,4 @@
-import { Bitmap, Canvas } from "./canvas.js";
+import { Bitmap, Canvas, Flip } from "./canvas.js";
 import { CoreEvent } from "./core.js";
 import { COLUMN_COUNT, createTerrainMap } from "./terrainmap.js";
 
@@ -25,13 +25,7 @@ export class Stage {
     }
 
 
-    public update(event : CoreEvent) : void {
-
-        // ...
-    }
-
-
-    public draw(canvas : Canvas, bmpBase : Bitmap) : void {
+    private drawTerrain(canvas : Canvas, bmp : Bitmap) : void {
 
         let sx : number;
         let sy : number;
@@ -56,8 +50,63 @@ export class Stage {
                 sx = tid % COLUMN_COUNT;
                 sy = (tid / COLUMN_COUNT) | 0;
 
-                canvas.drawBitmapRegion(bmpBase, sx*8, sy*8, 8, 8, x*8, y*8);
+                canvas.drawBitmapRegion(bmp, sx*8, sy*8, 8, 8, x*8, y*8);
             }
         }
+    }
+
+
+    private drawNonTerrainStaticTiles(canvas : Canvas, bmp : Bitmap) : void {
+
+        let tid : number;
+        let dx : number;
+        let dy : number;
+
+        for (let y = 0; y < this.height; ++ y) {
+
+            for (let x = 0; x < this.width; ++ x) {
+
+                dx = x*16;
+                dy = y*16;
+
+                tid = this.staticTiles[y*this.width + x];
+                switch (tid) {
+
+                // Ladder
+                case 2:
+
+                    for (let j = 0; j < 2; ++ j) {
+
+                        canvas.drawBitmapRegion(bmp, 56, 0, 8, 8, dx, dy + j*8)
+                            .drawBitmapRegion(bmp, 56, 0, 8, 8, dx+8, dy + j*8, Flip.Horizontal);
+                    }
+
+                    if (y > 0 && this.staticTiles[(y-1)*this.width + x] != 2) {
+
+                        dy -= 8;
+                        canvas.drawBitmapRegion(bmp, 56, 8, 8, 8, dx, dy)
+                              .drawBitmapRegion(bmp, 56, 8, 8, 8, dx+8, dy, Flip.Horizontal);  
+                    }
+
+                    break;
+
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
+
+    public update(event : CoreEvent) : void {
+
+        // ...
+    }
+
+
+    public draw(canvas : Canvas, bmpBase : Bitmap) : void {
+
+        this.drawTerrain(canvas, bmpBase);
+        this.drawNonTerrainStaticTiles(canvas, bmpBase);
     }
 }

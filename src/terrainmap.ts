@@ -1,6 +1,6 @@
 
 
-export const COLUMN_COUNT = 8; // Amount of tiles per row in tileset bitmap
+export const COLUMN_COUNT = 7; // Amount of tiles per row in tileset bitmap
 
 
 const getTile = (data : Array<number>, width : number, height : number, x : number, y : number, def = 1) : number => {
@@ -34,8 +34,14 @@ const computeTerrainDataForGroundTile = (data : Array<number>, width : number, h
             out[p] = 4;
         else if (neighborhood[3])
             out[p] = 1;   
-        else
+        else {
+
             out[p] = 2;
+            if (x > 0) {
+
+                out[p-1] = COLUMN_COUNT + 7;
+            }
+        }
     }
     else if (!neighborhood[0]) {
 
@@ -50,8 +56,14 @@ const computeTerrainDataForGroundTile = (data : Array<number>, width : number, h
             out[p] = COLUMN_COUNT + 4;
         else if (neighborhood[5])
             out[p] = 1;   
-        else
+        else {
+
             out[p] = 3;
+            if (x < width-1) {
+
+                out[p+1] = 7;
+            }
+        }
     }
     else if (!neighborhood[2]) {
 
@@ -93,23 +105,6 @@ const computeTerrainDataForGroundTile = (data : Array<number>, width : number, h
 }
 
 
-const computeLadderData =  (data : Array<number>, width : number, height : number, 
-    out : Array<number>, x : number, y : number) : void => {
-
-    let p = (y*2) * width * 2 + x*2;
-
-    out[p] = 7;
-    out[p + 1] = 8;
-    out[p +  width*2] = 7;
-    out[p +  width*2 + 1] = 8;
-
-    if (y > 0 && getTile(data, width, height, x, y-1) != 2) {
-
-        out[p - width*2] = COLUMN_COUNT + 7;
-        out[p - width*2 + 1] = COLUMN_COUNT + 8;
-    }
-}
-
 
 export const createTerrainMap = (data : Array<number>, width : number, height : number) : Array<number> => {
 
@@ -121,14 +116,10 @@ export const createTerrainMap = (data : Array<number>, width : number, height : 
         for (let x = 0; x < width; ++ x) {
 
             tid = data[y * width + x];
-            if (tid == 1) {
+            if (tid != 1)
+                continue;
 
-                computeTerrainDataForGroundTile(data, width, height, out, x, y);
-            }
-            else if (tid == 2) {
-
-                computeLadderData(data, width, height, out, x, y);
-            }
+            computeTerrainDataForGroundTile(data, width, height, out, x, y);
         }
     }
     return out;
