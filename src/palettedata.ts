@@ -48,7 +48,7 @@ export const PLAYER_BLOCK_1 = [
 ];
 export const PLAYER_BLOCK_2 = [ 
     0,
-    0b101010,
+    0b110100,
     0b111111,
     -1
 ];

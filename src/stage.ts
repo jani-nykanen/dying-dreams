@@ -1,16 +1,72 @@
 import { Bitmap, Canvas, Flip } from "./canvas.js";
 import { CoreEvent } from "./core.js";
+import { Player } from "./player.js";
 import { COLUMN_COUNT, createTerrainMap } from "./terrainmap.js";
 
+
+const STATIC_TILES = [0, 1, 2];
+const DYNAMIC_TILES = [3];
+
+
+export const enum Direction {
+
+    None = 0,
+    Right = 1,
+    Up = 2,
+    Left = 3,
+    Down = 4
+};
+
+
+export class PuzzleState {
+
+    private layers : Array<Array<number>>;
+
+    public readonly width : number;
+    public readonly height : number;
+
+
+    constructor(bottom : Array<number>, top : Array<number>, 
+        width : number, height : number) {
+
+        // We make an assumption that the arrays passed here
+        // are copies already, to avoid possible double
+        // Array.from, which affects the performance
+        this.layers = new Array<Array<number>> (2);
+        this.layers[0] = bottom;
+        this.layers[1] = top;
+
+        this.width = width;
+        this.height = height;
+    }
+
+
+    public getTile(layer : 0 | 1, x : number, y : number, def = 1) : number {
+
+        if (x < 0 || y < 0 || x >= this.width || y >= this.height)
+            return def;
+
+        return this.layers[layer][y*this.width + x];
+    }
+
+
+    public clone = () : PuzzleState => new PuzzleState(
+        Array.from(this.layers[0]), 
+        Array.from(this.layers[1]), 
+        this.width, this.height);
+}
 
 
 export class Stage {
 
 
     private baseTilemap : Array<number>;
-    private staticTiles : Array<number>;
-
     private terrainMap : Array<number>;
+
+    private states : Array<PuzzleState>;
+    private activeState : PuzzleState;
+
+    private player : Player | null = null;
 
     public readonly width = 10;
     public readonly height = 9;
@@ -19,9 +75,40 @@ export class Stage {
     constructor(initialMap : Array<number>) {
 
         this.baseTilemap = Array.from(initialMap);
-        this.staticTiles = Array.from(initialMap).map(v => [1,2].includes(v) ? v : 0);
 
-        this.terrainMap = createTerrainMap(this.staticTiles, this.width, this.height);
+        this.states = new Array<PuzzleState> ();
+        this.activeState = new PuzzleState(
+            this.baseTilemap.map(v => Number(STATIC_TILES.includes(v)) * v),
+            this.baseTilemap.map(v => Number(DYNAMIC_TILES.includes(v)) * v),
+            this.width, this.height);
+
+        this.terrainMap = createTerrainMap(this.baseTilemap, this.width, this.height);
+        this.parseObjects();
+    }
+
+
+    private parseObjects() : void {
+
+        let tid : number;
+
+        for (let y = 0; y < this.height; ++ y) {
+
+            for (let x = 0; x < this.width; ++ x) {
+
+                tid = this.baseTilemap[y*this.width + x];
+
+                switch (tid) {
+
+                // Player
+                case 3:
+                    this.player = new Player(x, y);
+                    break;
+
+                default:
+                    break;
+                }
+            }
+        }
     }
 
 
@@ -69,7 +156,7 @@ export class Stage {
                 dx = x*16;
                 dy = y*16;
 
-                tid = this.staticTiles[y*this.width + x];
+                tid = this.baseTilemap[y*this.width + x];
                 switch (tid) {
 
                 // Ladder
@@ -81,13 +168,12 @@ export class Stage {
                             .drawBitmapRegion(bmp, 56, 0, 8, 8, dx+8, dy + j*8, Flip.Horizontal);
                     }
 
-                    if (y > 0 && this.staticTiles[(y-1)*this.width + x] != 2) {
+                    if (y > 0 && this.baseTilemap[(y-1)*this.width + x] != 2) {
 
                         dy -= 8;
                         canvas.drawBitmapRegion(bmp, 56, 8, 8, 8, dx, dy)
                               .drawBitmapRegion(bmp, 56, 8, 8, 8, dx+8, dy, Flip.Horizontal);  
                     }
-
                     break;
 
                 default:
@@ -100,7 +186,7 @@ export class Stage {
 
     public update(event : CoreEvent) : void {
 
-        // ...
+        this.player?.update(this, event);
     }
 
 
@@ -108,5 +194,7 @@ export class Stage {
 
         this.drawTerrain(canvas, bmpBase);
         this.drawNonTerrainStaticTiles(canvas, bmpBase);
+
+        this.player?.draw(canvas, bmpBase);
     }
 }
