@@ -25,7 +25,7 @@ export class Game {
 
         let lookup = generateRGB222LookupTable();
 
-        this.loaded = false;;
+        this.loaded = false;
 
         this.bmpBase = loadBitmapRGB222("b.png", lookup, PALETTE1, () => {
 

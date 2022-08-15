@@ -24,13 +24,17 @@ export class GameObject {
     }
 
 
-    private updateMovement(event : CoreEvent) : void {
+    protected stopMovementEvent(stage : Stage, event : CoreEvent) : void {}
+
+
+    private updateMovement(stage : Stage, event : CoreEvent) : void {
 
         if (!this.moving)
             return;
 
         if ((this.moveTimer += this.moveSpeed * event.step) >= 1.0) {
 
+            this.stopMovementEvent(stage, event);
             this.pos = this.target.clone();
             
             this.moveTimer = 0;
@@ -59,7 +63,7 @@ export class GameObject {
             return;
 
         this.updateLogic(stage, event);
-        this.updateMovement(event);
+        this.updateMovement(stage, event);
     }
 
 

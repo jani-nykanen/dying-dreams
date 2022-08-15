@@ -200,4 +200,21 @@ export class Stage {
 
 
     public getTile = (layer : 0 | 1, x : number, y : number) : number => this.activeState.getTile(layer, x, y);
+
+
+    public isSolid = (x : number, y : number) : boolean => [1].includes(this.getTile(0, x, y));
+    public isLadder = (x : number, y : number) : boolean => this.getTile(0, x, y) == 2;
+
+
+    public findGround(x : number, y : number) : number {
+
+        for (let j = y; j < this.height; ++ j) {
+
+            if (this.isSolid(x, j) || this.isLadder(x, j)) {
+
+                return j-1;
+            }
+        }
+        return this.height-1;
+    }
 }

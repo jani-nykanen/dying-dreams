@@ -61,15 +61,54 @@ export class Player extends GameObject {
             tx = (this.pos.x + dx) | 0;
             ty = (this.pos.y + dy) | 0;
             
-            if (stage.getTile(0, tx, ty) == 1) {
+            if (stage.isSolid(tx, ty)) {
 
-                return;
+                if (dx != 0 && !stage.isSolid(tx, ty-1) && !this.climbing) {
+
+                    -- ty;
+                }
+                else {
+                
+                    return;
+                }
             }
+            else if (dx != 0 && !stage.isSolid(tx, ty+1)) {
 
+                // Cannot jump from a ladder
+                if (this.climbing) {
+
+                    return;
+                }
+
+                // Jump over gap, if possible
+                if (stage.isSolid(tx+dx, ty+1) &&
+                    !stage.isSolid(tx+dx, ty)) {
+
+                    tx += dx;
+                    if (stage.isSolid(tx, ty)) {
+
+                        return;
+                    }
+                }
+                // Fall
+                else {
+                    
+                    ty = stage.findGround(tx, ty);
+                }
+            }
+            else if (dy != 0) {
+
+                if (stage.getTile(0, tx, ty-dy) == 2 ||
+                    stage.getTile(0, tx, ty) == 2) {
+
+                    this.climbing = true;
+                }
+                else {
+
+                    return;
+                }
+            }
             this.moveTo(tx, ty);
-            this.climbing = dy != 0 && 
-                (stage.getTile(0, this.pos.x, this.pos.y) == 2 ||
-                 stage.getTile(0, this.target.x, this.target.y) == 2);
         }
     }
 
@@ -119,10 +158,26 @@ export class Player extends GameObject {
     }
 
 
+    protected stopMovementEvent(stage : Stage, event : CoreEvent) : void {
+
+        let px = this.target.x | 0;
+        let py = this.target.y | 0;
+
+        if (this.climbing) {
+
+            if (!stage.isLadder(px, py) || 
+                (py > this.pos.y && stage.isSolid(px, py+1))) {
+
+                this.climbing = false;
+            }
+        }
+    }
+
+
     protected updateLogic(stage: Stage, event: CoreEvent) : void {
         
-        if (!this.moving && this.climbing
-            && stage.getTile(0, this.pos.x, this.pos.y) != 2) {
+        if (!this.moving && this.climbing && 
+            !stage.isLadder(this.pos.x, this.pos.y)) {
 
             this.climbing = false;
         }
