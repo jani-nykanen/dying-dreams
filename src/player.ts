@@ -6,6 +6,17 @@ import { Stage } from "./stage.js";
 import { Vector2 } from "./vector.js";
 
 
+
+const enum JumpType {
+
+    None = 0,
+    Up = 1,
+    Forward = 2,
+    Down = 3
+};
+
+
+
 export class Player extends GameObject {
 
 
@@ -18,6 +29,7 @@ export class Player extends GameObject {
     private animSpeed = 0.0;
 
     private climbing = false;
+    private jumpType : JumpType = JumpType.None;
 
 
     constructor(x : number, y : number) {
@@ -56,6 +68,7 @@ export class Player extends GameObject {
             dy = 1;
         }
 
+        this.jumpType = JumpType.None;
         if (dx != 0 || dy != 0) {
 
             tx = (this.pos.x + dx) | 0;
@@ -63,8 +76,10 @@ export class Player extends GameObject {
             
             if (stage.isSolid(tx, ty)) {
 
+                // Jump over a tile, if possible
                 if (dx != 0 && !stage.isSolid(tx, ty-1) && !this.climbing) {
 
+                    this.jumpType = JumpType.Up;
                     -- ty;
                 }
                 else {
@@ -72,7 +87,9 @@ export class Player extends GameObject {
                     return;
                 }
             }
-            else if (dx != 0 && !stage.isSolid(tx, ty+1)) {
+            else if (dx != 0 && 
+                    !stage.isSolid(tx, ty+1) && 
+                    !stage.isLadder(tx, ty+1)) {
 
                 // Cannot jump from a ladder
                 if (this.climbing) {
@@ -89,17 +106,21 @@ export class Player extends GameObject {
 
                         return;
                     }
+
+                    this.jumpType = JumpType.Forward;
                 }
                 // Fall
-                else {
+                else  {
                     
+                    this.jumpType = JumpType.Down;
                     ty = stage.findGround(tx, ty);
                 }
             }
             else if (dy != 0) {
 
-                if (stage.getTile(0, tx, ty-dy) == 2 ||
-                    stage.getTile(0, tx, ty) == 2) {
+                // Climb
+                if (stage.isLadder(tx, ty-dy) ||
+                    stage.isLadder(tx, ty)) {
 
                     this.climbing = true;
                 }
@@ -113,7 +134,7 @@ export class Player extends GameObject {
     }
 
 
-    private startAnimation(start : number, end : number, speed : number) : void {
+    private startAnimation(start : number, end = start, speed = 0) : void {
 
         this.animStart = start;
         this.animEnd = end;
@@ -138,12 +159,19 @@ export class Player extends GameObject {
 
         if (!this.climbing) {
 
+            if (this.jumpType == JumpType.None) {
+
+                this.startAnimation(1, 4, 6.0);
+            }
+            else {
+
+                this.startAnimation(5);
+            }
             this.flip = (this.pos.x > this.target.x) ? Flip.Horizontal : Flip.None;
-            this.startAnimation(1, 4, 6.0);
         }
         else {
 
-            this.startAnimation(5, 6, 8.0);
+            this.startAnimation(6, 7, 8.0);
         }
 
         if (this.animSpeed > 0.0 &&
@@ -189,8 +217,10 @@ export class Player extends GameObject {
 
     public draw(canvas : Canvas, bmp : Bitmap) : void {
 
-        const LEG_X = [0, 16, 16, 32, 32, 48, 48];
-        const LEG_Y = [8, 0, 8, 0, 8, 8, 8];
+        const JUMP_HEIGHT = [12.0, 8.0, 12.0];
+
+        const LEG_X = [0, 16, 16, 32, 32, 64];
+        const LEG_Y = [8, 0, 8, 0, 8, 0];
 
         let renderPos = Vector2.interpolate(this.pos, this.target, this.moveTimer).scalarMultiply(16);
 
@@ -200,8 +230,26 @@ export class Player extends GameObject {
         if (this.climbing) {
 
             canvas.drawBitmapRegion(bmp, 48, 16, 16, 16, px, py, 
-                this.frame == 6 ? Flip.Horizontal : Flip.None);
+                this.frame == 7 ? Flip.Horizontal : Flip.None);
             return;
+        }
+
+        if (this.jumpType != JumpType.None) {
+
+            switch (this.jumpType) {
+
+            // TODO: Handle down jump seperately
+
+            case JumpType.Forward:
+            case JumpType.Up:
+            case JumpType.Down:
+
+                py -= Math.round(Math.sin(Math.PI * this.moveTimer) * JUMP_HEIGHT[Number(this.jumpType-1)]);
+                break;
+
+            default:
+                break;
+            }
         }
 
         // Head
