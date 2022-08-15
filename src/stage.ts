@@ -197,4 +197,7 @@ export class Stage {
 
         this.player?.draw(canvas, bmpBase);
     }
+
+
+    public getTile = (layer : 0 | 1, x : number, y : number) : number => this.activeState.getTile(layer, x, y);
 }
