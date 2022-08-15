@@ -1,7 +1,9 @@
 import { Bitmap, Canvas, Flip } from "./canvas.js";
 import { CoreEvent } from "./core.js";
-import { GameObject } from "./gameobject.js";
+import { DEFAULT_MOVE_SPEED, GameObject } from "./gameobject.js";
 import { KeyState } from "./keyboard.js";
+import { clamp } from "./math.js";
+import { Ramp, Sample } from "./sample.js";
 import { Stage } from "./stage.js";
 import { Vector2 } from "./vector.js";
 
@@ -30,13 +32,25 @@ export class Player extends GameObject {
 
     private climbing = false;
     private jumpType : JumpType = JumpType.None;
+    private jumpHeight : number;
+
+    // TODO: Move these to an asset manager object
+    private sampleJump : Sample;
+    private sampleClimb : Sample;
 
 
-    constructor(x : number, y : number) {
+    constructor(x : number, y : number, event : CoreEvent) {
 
         super(x, y);
 
-        this.moveSpeed = 1.0/16.0;
+        this.sampleJump = event.audio.createSample(
+            [[160, 4], [192, 4], [256, 10]], 0.60,
+            "sawtooth", Ramp.Exponential, 0.20
+        );
+        this.sampleClimb = event.audio.createSample(
+            [[180, 3]], 0.60,
+            "square", Ramp.Instant, 0.20
+        );
     }
 
 
@@ -69,6 +83,8 @@ export class Player extends GameObject {
         }
 
         this.jumpType = JumpType.None;
+        this.moveSpeed = DEFAULT_MOVE_SPEED;
+
         if (dx != 0 || dy != 0) {
 
             tx = (this.pos.x + dx) | 0;
@@ -114,6 +130,9 @@ export class Player extends GameObject {
                     
                     this.jumpType = JumpType.Down;
                     ty = stage.findGround(tx, ty);
+
+                    this.jumpHeight = Math.abs(this.pos.y - ty);
+                    this.moveSpeed = DEFAULT_MOVE_SPEED * (1.0 + (this.jumpHeight - 1)*0.25);
                 }
             }
             else if (dy != 0) {
@@ -130,6 +149,11 @@ export class Player extends GameObject {
                 }
             }
             this.moveTo(tx, ty);
+
+            if (this.jumpType != JumpType.None) {
+
+                event.audio.playSample(this.sampleJump, 0.60);
+            }
         }
     }
 
@@ -157,6 +181,8 @@ export class Player extends GameObject {
             return;
         }
 
+        let oldFrame = this.frame;
+
         if (!this.climbing) {
 
             if (this.jumpType == JumpType.None) {
@@ -182,6 +208,11 @@ export class Player extends GameObject {
 
                 this.frame = this.animStart;
             }
+        }
+
+        if (this.climbing && oldFrame != this.frame && this.frame == 6) {
+
+            event.audio.playSample(this.sampleClimb, 0.70);
         }
     }
 
@@ -219,8 +250,8 @@ export class Player extends GameObject {
 
         const JUMP_HEIGHT = [12.0, 8.0, 12.0];
 
-        const LEG_X = [0, 16, 16, 32, 32, 64];
-        const LEG_Y = [8, 0, 8, 0, 8, 0];
+        const LEG_X = [0, 16, 16, 32, 32, 64, 0, 0];
+        const LEG_Y = [8, 0, 8, 0, 8, 0, 8, 8];
 
         let renderPos = Vector2.interpolate(this.pos, this.target, this.moveTimer).scalarMultiply(16);
 
@@ -234,22 +265,27 @@ export class Player extends GameObject {
             return;
         }
 
+        let jumpBonus = 0;
         if (this.jumpType != JumpType.None) {
 
             switch (this.jumpType) {
 
-            // TODO: Handle down jump seperately
-
             case JumpType.Forward:
-            case JumpType.Up:
+            case JumpType.Up: 
+
+                jumpBonus = Math.round(Math.sin(Math.PI * this.moveTimer) * JUMP_HEIGHT[Number(this.jumpType-1)]);
+                break;
+
             case JumpType.Down:
 
-                py -= Math.round(Math.sin(Math.PI * this.moveTimer) * JUMP_HEIGHT[Number(this.jumpType-1)]);
+                jumpBonus = Math.round(Math.sin(Math.PI * this.moveTimer) * JUMP_HEIGHT[Number(this.jumpType-1)] * this.jumpHeight);
                 break;
 
             default:
                 break;
             }
+
+            py -= jumpBonus;
         }
 
         // Head

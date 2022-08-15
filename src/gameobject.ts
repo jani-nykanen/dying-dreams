@@ -4,6 +4,9 @@ import { Stage } from "./stage.js";
 import { Vector2 } from "./vector.js";
 
 
+export const DEFAULT_MOVE_SPEED = 16.0;
+
+
 export class GameObject {
 
     
@@ -12,7 +15,7 @@ export class GameObject {
 
     protected moving = false;
     protected moveTimer = 0.0;
-    protected moveSpeed = 1.0/30.0;
+    protected moveSpeed = DEFAULT_MOVE_SPEED;
 
     protected exist = true;
 
@@ -32,7 +35,7 @@ export class GameObject {
         if (!this.moving)
             return;
 
-        if ((this.moveTimer += this.moveSpeed * event.step) >= 1.0) {
+        if ((this.moveTimer += (1.0 / this.moveSpeed) * event.step) >= 1.0) {
 
             this.stopMovementEvent(stage, event);
             this.pos = this.target.clone();

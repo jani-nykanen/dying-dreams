@@ -62,6 +62,7 @@ export class Sample {
 
         this.oscillator.frequency.setValueAtTime(this.baseSequence[0][0], time);
         this.gain.gain.setValueAtTime(clamp(volume, 0.01, 1.0), time);
+        this.gain.gain.cancelAndHoldAtTime(time);
 
         timer = 0;
         for (let s of this.baseSequence ) {

@@ -72,7 +72,7 @@ export class Stage {
     public readonly height = 9;
 
 
-    constructor(initialMap : Array<number>) {
+    constructor(initialMap : Array<number>, event : CoreEvent) {
 
         this.baseTilemap = Array.from(initialMap);
 
@@ -83,11 +83,11 @@ export class Stage {
             this.width, this.height);
 
         this.terrainMap = createTerrainMap(this.baseTilemap, this.width, this.height);
-        this.parseObjects();
+        this.parseObjects(event);
     }
 
 
-    private parseObjects() : void {
+    private parseObjects(event : CoreEvent) : void {
 
         let tid : number;
 
@@ -101,7 +101,7 @@ export class Stage {
 
                 // Player
                 case 3:
-                    this.player = new Player(x, y);
+                    this.player = new Player(x, y, event);
                     break;
 
                 default:

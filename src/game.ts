@@ -34,7 +34,7 @@ export class Game {
         this.bmpBackground = createBackgroundBitmap(160, 160, 8);
         this.bmpFontSmall = generateFont("12px Arial", 24, 24, 2, 8, 127);
 
-        this.stage = new Stage(LEVEL_DATA[0]);
+        this.stage = new Stage(LEVEL_DATA[0], event);
     }
 
 

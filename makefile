@@ -43,3 +43,7 @@ pack: minify
 playtest: pack
 	mkdir -p play
 	unzip -d play dist.zip
+
+
+levels:
+	./scripts/mapconv.py
