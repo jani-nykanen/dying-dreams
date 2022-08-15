@@ -29,13 +29,24 @@ export class GameObject {
         if (!this.moving)
             return;
 
-        if ((this.moveTimer -= this.moveSpeed * event.step) <= 0) {
+        if ((this.moveTimer += this.moveSpeed * event.step) >= 1.0) {
 
             this.pos = this.target.clone();
             
             this.moveTimer = 0;
             this.moving = false;
         }
+    }
+
+
+    protected moveTo(x : number, y : number) : void {
+
+        if (this.moving)
+            return;
+
+        this.target = new Vector2(x, y);
+        this.moving = true;
+        this.moveTimer = 0.0;
     }
 
 
