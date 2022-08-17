@@ -25,13 +25,17 @@ export class PuzzleState {
     private tiles : Array<number>;
     private flip : Flip;
 
+    private readonly staticTiles : Array<number>;
+
     public readonly width : number;
     public readonly height : number;
 
 
-    constructor(data : Array<number>, width : number, height : number, flip : Flip) {
+    constructor(data : Array<number>, staticTiles : Array<number>,
+        width : number, height : number, flip : Flip) {
 
         this.tiles = Array.from(data);
+        this.staticTiles = staticTiles; // Note: we copy the reference, NOT make a copy!
         this.flip = flip;
 
         this.width = width;
@@ -45,6 +49,15 @@ export class PuzzleState {
             return def;
 
         return this.tiles[y*this.width + x];
+    }
+
+
+    public getStaticTile(x : number, y : number, def = 1) : number {
+        
+        if (x < 0 || y < 0 || x >= this.width || y >=  this.height)
+            return def;
+
+        return this.staticTiles[y*this.width + x];
     }
 
 
@@ -82,7 +95,7 @@ export class PuzzleState {
     }
 
 
-    public clone = () : PuzzleState => new PuzzleState(this.tiles, this.width, this.height, this.flip);
+    public clone = () : PuzzleState => new PuzzleState(this.tiles, this.staticTiles, this.width, this.height, this.flip);
 }
 
 
@@ -111,6 +124,7 @@ export class Stage {
         this.states = new Array<PuzzleState> ();
         this.activeState = new PuzzleState(
             this.baseTilemap.map(v => Number(DYNAMIC_TILES.includes(v)) * v),
+            this.baseTilemap,
             this.width, this.height, Flip.None);
 
         this.moveData = (new Array<Direction> (this.width*this.height)).fill(Direction.None);
@@ -119,21 +133,9 @@ export class Stage {
     }
 
 
-    private getBaseMapTile(x : number, y : number, def = 1) : number {
-        
-        if (x < 0 || y < 0 || x >= this.width || y >=  this.height)
-            return def;
-
-        return this.baseTilemap[y*this.width + x];
-    }
-
-
     private isReserved(x : number, y : number) : boolean {
 
-        if (x < 0 || y < 0 || x >= this.width || y >=  this.height)
-            return true;
-
-        return [1, 3].includes(this.getBaseMapTile(x, y)) ||
+        return [1, 3].includes(this.activeState.getStaticTile(x, y)) ||
                this.activeState.getTile(x, y) == 4;
     }
 
@@ -143,9 +145,9 @@ export class Stage {
         if (direction == Direction.Left || direction == Direction.Right)
             return true;
 
-        let ret = this.getBaseMapTile(x, y) == 2;
+        let ret = this.activeState.getStaticTile(x, y) == 2;
         if (!ret && direction == Direction.Down)
-            return this.getBaseMapTile(x, y+1) == 2;
+            return this.activeState.getStaticTile(x, y+1) == 2;
 
         return ret;
     }
