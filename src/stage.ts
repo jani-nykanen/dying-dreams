@@ -1,10 +1,13 @@
 import { animate } from "./animator.js";
 import { Bitmap, Canvas, Flip } from "./canvas.js";
 import { CoreEvent } from "./core.js";
+import { KeyState } from "./keyboard.js";
 import { COLUMN_COUNT, createTerrainMap } from "./terrainmap.js";
 
 
 const DYNAMIC_TILES = [4];
+const ANIMATION_SPEED = 1.0/16.0;
+const STATE_BUFFER_MAX = 64;
 
 
 export const enum Direction {
@@ -43,6 +46,15 @@ export class PuzzleState {
     }
 
 
+    public setTile(x : number, y : number, v : number) : void {
+        
+        if (x < 0 || y < 0 || x >= this.width || y >= this.height)
+            return;
+
+        this.tiles[y*this.width + x] = v;
+    }
+
+
     public iterate(cb : (x : number, y : number, value : number) => void) : void {
 
         let i = 0;
@@ -70,6 +82,9 @@ export class Stage {
     private activeState : PuzzleState;
     private moveData : Array<Direction>;
 
+    private moveTimer = 0.0;
+    private moving = false;
+
     public readonly width = 10;
     public readonly height = 9;
 
@@ -82,9 +97,115 @@ export class Stage {
         this.activeState = new PuzzleState(
             this.baseTilemap.map(v => Number(DYNAMIC_TILES.includes(v)) * v),
             this.width, this.height);
-        this.moveData = (new Array<Direction> ()).fill(Direction.None);
+        this.states.push(this.activeState.clone());
+
+        this.moveData = (new Array<Direction> (this.width*this.height)).fill(Direction.None);
 
         this.terrainMap = createTerrainMap(this.baseTilemap, this.width, this.height);
+    }
+
+
+    private isReserved(x : number, y : number) : boolean {
+
+        if (x < 0 || y < 0 || x >= this.width || y >=  this.height)
+            return true;
+
+        return this.baseTilemap[y*this.width + x] == 1 ||
+               this.states[this.states.length-1].getTile(x, y) == 4;
+    }
+
+
+    private handleAction(direction : Direction, event : CoreEvent) : boolean {
+
+        const DX = [1, 0, -1, 0];
+        const DY = [0, -1, 0, 1];
+
+        if (direction == Direction.None)
+            return false;
+
+        let dx = DX[Number(direction) -1];
+        let dy = DY[Number(direction) -1];
+
+        let moved = false;
+
+        this.states[this.states.length-1].iterate((x : number, y : number, v : number) => {
+
+            switch (v) {
+
+            // Player
+            case 4:
+
+                if (this.moveData[y*this.width + x] == Direction.None &&
+                    !this.isReserved(x + dx, y + dy)) {
+
+                    this.activeState.setTile(x, y, 0);
+                    this.activeState.setTile(x + dx, y + dy, 4);
+
+                    this.moveData[(y + dy) * this.width + (x + dx)] = direction;
+                    moved = true;
+                }
+                break;
+
+            default:
+                break;
+            }
+
+        });
+
+        return moved;
+    }
+
+
+    private control(event : CoreEvent) : void {
+
+        if (this.moving)
+            return;
+
+        let dir = Direction.None;
+
+        if ((event.keyboard.getActionState("right") & KeyState.DownOrPressed) == 1) {
+
+            dir = Direction.Right;
+        }
+        else if ((event.keyboard.getActionState("up") & KeyState.DownOrPressed) == 1) {
+
+            dir = Direction.Up;
+        }
+        else if ((event.keyboard.getActionState("left") & KeyState.DownOrPressed) == 1) {
+
+            dir = Direction.Left;
+        }
+        else if ((event.keyboard.getActionState("down") & KeyState.DownOrPressed) == 1) {
+
+            dir = Direction.Down;
+        }
+
+        if (this.handleAction(dir, event)) {
+
+            this.moving = true;
+            this.moveTimer = 0.0;
+        }
+    }
+
+
+    private move(event : CoreEvent) : void {
+
+        if (!this.moving)
+            return;
+
+        if ((this.moveTimer += ANIMATION_SPEED * event.step) >= 1.0) {
+
+            this.moveTimer = 0;
+            this.moving = false;
+
+            this.states.push(this.activeState.clone());
+            if (this.states.length >= STATE_BUFFER_MAX) {
+
+                this.states.shift();
+            }
+
+            this.moveData.fill(Direction.None);
+        }
     }
 
 
@@ -173,7 +294,8 @@ export class Stage {
 
     public update(event : CoreEvent) : void {
 
-        // ...
+        this.move(event);
+        this.control(event);
     }
 
 
@@ -181,6 +303,6 @@ export class Stage {
     
         this.drawNonTerrainStaticTiles(canvas, bmpBase);
         this.drawTerrain(canvas, bmpBase);
-        animate(this.activeState, this.moveData, canvas, bmpBase);
+        animate(this.activeState, this.moveData, this.moveTimer, canvas, bmpBase);
     }
 }
