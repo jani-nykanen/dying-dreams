@@ -6,7 +6,6 @@ import { COLUMN_COUNT, createTerrainMap } from "./terrainmap.js";
 
 
 const DYNAMIC_TILES = [4];
-const ANIMATION_SPEED = 1.0/16.0;
 const STATE_BUFFER_MAX = 64;
 
 
@@ -112,6 +111,7 @@ export class Stage {
 
     private moveTimer = 0.0;
     private moving = false;
+    private falling = false;
 
     public readonly width = 10;
     public readonly height = 9;
@@ -265,16 +265,22 @@ export class Stage {
 
             this.moving = true;
             this.moveTimer = 0.0;
+            this.falling = false;
         }
     }
 
 
     private move(event : CoreEvent) : void {
 
+        const MOVE_SPEED_BASE = 1.0/16.0;
+        const MOVE_SPEED_FALL = 1.0/8.0;
+
         if (!this.moving)
             return;
 
-        if ((this.moveTimer += ANIMATION_SPEED * event.step) >= 1.0) {
+        let moveSpeed = this.falling ? MOVE_SPEED_FALL : MOVE_SPEED_BASE;
+
+        if ((this.moveTimer += moveSpeed * event.step) >= 1.0) {
 
             this.moveTimer = 0;
             this.moving = false;
@@ -286,6 +292,8 @@ export class Stage {
                 
                 this.moving = true;
                 this.moveTimer = 0.0;
+
+                this.falling = true;
             }
             else if (this.oldState != null) {
 

@@ -2,6 +2,11 @@ import { Bitmap, Canvas, Flip } from "./canvas.js";
 import { Direction, PuzzleState } from "./stage.js";
 
 
+//
+// TODO: Merge with stage once finished to save
+// some bytes
+//
+
 
 const drawHuman = (canvas : Canvas, bmp : Bitmap, 
     x : number, y : number,
@@ -9,15 +14,18 @@ const drawHuman = (canvas : Canvas, bmp : Bitmap,
     direction : Direction, state : PuzzleState, animTimer : number,
     moveData : Array<Direction>) : void => {
 
-    const LEG_X = [0, 16, 16, 32, 32, 64, 0, 0];
-    const LEG_Y = [8, 0, 8, 0, 8, 0, 8, 8];
+    const LEG_X = [0, 16, 16, 32, 32, 48];
+    const LEG_Y = [8, 0, 8, 0, 8, 0];
 
     let frame = 0;
     let climbing = false;
 
+    let horizontal = direction == Direction.Left || direction == Direction.Right;
+
     // Check if climbing
-    if ((state.getStaticTile(x, y) == 2 &&
-         (state.getStaticTile(x, y+1) != 1 || direction == Direction.Down)) ||
+    if (!horizontal &&
+        (state.getStaticTile(x, y) == 2 &&
+        (state.getStaticTile(x, y+1) != 1 || direction == Direction.Down)) ||
         (direction == Direction.Up && state.getStaticTile(x, y+1) == 2)) {
 
         climbing = true;
@@ -27,6 +35,14 @@ const drawHuman = (canvas : Canvas, bmp : Bitmap,
             frame += Math.floor(animTimer * 2);
         }
     }
+    // Or falling
+    else if (direction == Direction.Down && 
+        state.getStaticTile(x, y) != 2 && 
+        state.getTile(x, y+1) != 4) {
+
+        frame = 5;
+    }
+    // Or not being carried, so can be animated
     else if (direction != Direction.None && 
         (state.getTile(x, y+1) != 4 || 
         (y < state.height-1 && moveData[(y+1) * state.width + x] == Direction.None))) {

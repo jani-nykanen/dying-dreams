@@ -48,8 +48,8 @@ const TILESET_BLOCK_7 = [
 // Figures
 const FIGURE_BLOCK = [ 
     0,
-    0b011011,
-    0b101111,
+    0b100100,
+    0b111000,
     -1
 ];
 
