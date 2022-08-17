@@ -140,15 +140,35 @@ export class Stage {
     }
 
 
-    private checkLadder(x : number, y : number, direction : Direction) : boolean {
+    private checkLadder(x : number, y : number, direction : Direction, falling = false) : boolean {
+
+        // TODO: Simplify (make more "compact")
 
         if (direction == Direction.Left || direction == Direction.Right)
             return true;
 
-        let ret = this.activeState.getStaticTile(x, y) == 2;
-        if (!ret && direction == Direction.Down)
-            return this.activeState.getStaticTile(x, y+1) == 2;
+        let tid = this.activeState.getStaticTile(x, y);
+        let ret = tid == 2;
+        if (!ret) {
 
+            if (direction == Direction.Down) {
+
+                return this.activeState.getStaticTile(x, y+1) == 2 ||
+                    (!falling && y < this.height-1 && this.activeState.getTile(x, y+2) == 4);
+            }
+            else if (tid == 0) {
+
+                for (let dy = y+1; dy < this.height; ++ dy) {
+
+                    // Need to use the old state here...
+                    // TODO: Does this cause problems?
+                    if (this.oldState?.getTile(x, dy) != 4)
+                        break;
+                    if (this.oldState?.getStaticTile(x, dy) == 2)
+                        return true;
+                }
+            }
+        }
         return ret;
     }
 
@@ -184,7 +204,7 @@ export class Stage {
 
                     if (this.moveData[y*this.width + x] == Direction.None &&
                         !this.isReserved(x + dx, y + dy) &&
-                        this.checkLadder(x, y, direction) == !fallCheck) {
+                        this.checkLadder(x, y, direction, fallCheck) == !fallCheck) {
 
                         this.activeState.setTile(x, y, 0);
                         this.activeState.setTile(x + dx, y + dy, 4);
