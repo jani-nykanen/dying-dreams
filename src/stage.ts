@@ -132,7 +132,7 @@ export class Stage {
 
     private isReserved(x : number, y : number) : boolean {
 
-        return [1, 3].includes(this.activeState.getTile(0, x, y)) ||
+        return [1, 3, 8].includes(this.activeState.getTile(0, x, y)) ||
                this.activeState.getTile(1, x, y) == 4;
     }
 
@@ -269,15 +269,26 @@ export class Stage {
 
     private checkStaticTileEvents(event : CoreEvent) : boolean {
 
+        const HURTING_TILES = [5, 6, 7];
         let somethingHappened = false;
 
+        let bottom : number;
         this.activeState.iterate(0, (x : number, y : number, v : number) => {
 
-            if (this.activeState.getTile(1, x, y) == 4 &&
-                this.activeState.getTile(0, x, y) == 5) {
+            bottom = this.activeState.getTile(0, x, y);
 
-                for (let i = 0; i <= 1; ++ i)
-                    this.activeState.setTile(i as (0 | 1), x, y, 0);
+            if (this.activeState.getTile(1, x, y) == 4 &&
+                HURTING_TILES.includes(bottom)) {
+
+                this.activeState.setTile(1, x, y, 0);
+                if (bottom == 5) {
+
+                    this.activeState.setTile(0, x, y, 0);
+                }
+                else if (bottom == 7) {
+
+                    this.activeState.setTile(0, x, y, 8);
+                }
 
                 somethingHappened = true;
             }
@@ -308,7 +319,7 @@ export class Stage {
             tileEvent = this.checkStaticTileEvents(event);
             fall = this.handleAction(Direction.Down, event, true);
 
-            if (fall || tileEvent) {
+            if (fall) {
                 
                 this.moving = true;
                 this.moveTimer = 0.0;
@@ -386,6 +397,26 @@ export class Stage {
     }
 
 
+    private drawWater(canvas : Canvas, dx : number, dy : number) : void {
+
+        const AMPLITUDE = 2;
+        const YOFF = 6;
+
+        let baseWave = this.staticAnimationTimer * Math.PI*2;
+        let wave : number;
+
+        dy += YOFF;
+
+        canvas.setFillColor(170, 255, 255);
+        for (let x = 0; x < 16; ++ x) {
+
+            wave = Math.round(Math.sin(baseWave + (Math.PI*2) / 16 * x) * AMPLITUDE * Math.sin(Math.PI / 16 * x));
+
+            canvas.fillRect(dx + x, dy + wave, 1, 16 - (wave + YOFF));
+        }
+    }
+
+
     private drawNonTerrainStaticTiles(canvas : Canvas, bmp : Bitmap) : void {
 
         const BRIDGE_OFF = -2;
@@ -433,6 +464,25 @@ export class Stage {
                     bmp, 64, 32, 16, 16, dx, dy,
                     this.staticAnimationTimer * Math.PI*2,
                     Math.PI*4 / 16, 1);
+                break;
+
+            // Spikes
+            case 6:
+
+                for (let i = 0; i < 2; ++ i)
+                    canvas.drawBitmapRegion(bmp, 72, 0, 8, 8, dx + i*8, dy+8);
+                break;
+
+            // Lava
+            case 7:
+
+                this.drawWater(canvas, dx, dy);
+                break;
+
+            // Ice block
+            case 8:
+
+                canvas.drawBitmapRegion(bmp, 80, 32, 16, 16, dx, dy);
                 break;
 
             default:
