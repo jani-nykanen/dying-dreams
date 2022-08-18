@@ -22,3 +22,25 @@ export class Vector2 {
 
     public clone = () : Vector2 => new Vector2(this.x, this.y);
 }
+
+
+
+export class RGBA {
+
+    public r : number;
+    public g : number;
+    public b : number;
+    public a : number;
+
+
+    constructor(r = 255, g = r, b = g, a = 1.0) {
+
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
+    }
+
+
+    public clone = () : RGBA => new RGBA(this.r, this.g, this.b, this.a);
+}

@@ -11,11 +11,24 @@ export class CoreEvent {
     public readonly audio : AudioPlayer;
     public readonly step = 1.0;
 
+    private readonly canvas : Canvas;
 
-    constructor(keyboard : Keyboard, audio : AudioPlayer) {
+
+    constructor(keyboard : Keyboard, audio : AudioPlayer, canvas : Canvas) {
 
         this.keyboard = keyboard;
         this.audio = audio;
+        this.canvas = canvas;
+    }
+
+
+    public get screenWidth() : number { 
+        
+        return this.canvas.width; 
+    }
+    public get screenHeight() : number { 
+        
+        return this.canvas.height; 
     }
 }
 
@@ -44,7 +57,7 @@ export class Core {
         this.canvas = new Canvas(canvasWidth, canvasHeight);
         this.keyboard = new Keyboard();
         this.audio = new AudioPlayer();
-        this.event = new CoreEvent(this.keyboard, this.audio);
+        this.event = new CoreEvent(this.keyboard, this.audio, this.canvas);
     }
 
 

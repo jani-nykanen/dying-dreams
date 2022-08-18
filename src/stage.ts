@@ -2,7 +2,9 @@ import { animate } from "./animator.js";
 import { Bitmap, Canvas, Flip } from "./canvas.js";
 import { CoreEvent } from "./core.js";
 import { KeyState } from "./keyboard.js";
+import { nextParticle, StarParticle } from "./particle.js";
 import { COLUMN_COUNT, createTerrainMap } from "./terrainmap.js";
+import { RGBA } from "./vector.js";
 
 
 const DYNAMIC_TILES = [4];
@@ -110,6 +112,8 @@ export class Stage {
 
     private staticAnimationTimer = 0.0;
 
+    private stars : Array<StarParticle>;
+
     public readonly width = 10;
     public readonly height = 9;
 
@@ -127,6 +131,8 @@ export class Stage {
         this.moveData = (new Array<Direction> (this.width*this.height)).fill(Direction.None);
 
         this.terrainMap = createTerrainMap(this.baseTilemap, this.width, this.height);
+
+        this.stars = new Array<StarParticle> ();
     }
 
 
@@ -267,12 +273,42 @@ export class Stage {
     }
 
 
+    private spawnStarParticles(x : number, y : number, count : number, 
+        angleStart : number, color : RGBA) : void {
+
+        const BASE_SPEED = 2.0;
+        const VERTICAL_JUMP = -1.0;
+
+        let angle : number;
+
+        for (let i = 0; i < count; ++ i) {
+
+            angle = angleStart + Math.PI*2 / count * i;
+
+            (nextParticle(this.stars, StarParticle) as StarParticle)
+                .spawn(x, y, 
+                    Math.cos(angle) * BASE_SPEED, 
+                    Math.sin(angle) * BASE_SPEED + VERTICAL_JUMP,
+                 color);
+        }
+    }
+
+
     private checkStaticTileEvents(event : CoreEvent) : boolean {
 
         const HURTING_TILES = [5, 6, 7];
-        let somethingHappened = false;
+        
+        const COLORS = [
+            new RGBA(255, 255, 255),
+            new RGBA(255, 255, 85),
+            new RGBA(170, 255, 255)
+        ];
 
+        let somethingHappened = false;
         let bottom : number;
+
+        let color : RGBA;
+
         this.activeState.iterate(0, (x : number, y : number, v : number) => {
 
             bottom = this.activeState.getTile(0, x, y);
@@ -280,15 +316,21 @@ export class Stage {
             if (this.activeState.getTile(1, x, y) == 4 &&
                 HURTING_TILES.includes(bottom)) {
 
+                color = COLORS[0];
+
                 this.activeState.setTile(1, x, y, 0);
                 if (bottom == 5) {
 
                     this.activeState.setTile(0, x, y, 0);
+                    color = COLORS[1];
                 }
                 else if (bottom == 7) {
 
                     this.activeState.setTile(0, x, y, 8);
+                    color = COLORS[2];
                 }
+
+                this.spawnStarParticles(x*16 + 8, y*16 + 8, 4, Math.PI/4, color);
 
                 somethingHappened = true;
             }
@@ -306,20 +348,16 @@ export class Stage {
             return;
 
         let moveSpeed = this.falling ? MOVE_SPEED_FALL : MOVE_SPEED_BASE;
-        let fall = false;
-        let tileEvent = false;
 
         if ((this.moveTimer += moveSpeed * event.step) >= 1.0) {
 
             this.moveTimer = 0;
             this.moving = false;
-
             this.moveData.fill(Direction.None);
 
-            tileEvent = this.checkStaticTileEvents(event);
-            fall = this.handleAction(Direction.Down, event, true);
+            this.checkStaticTileEvents(event);
 
-            if (fall) {
+            if (this.handleAction(Direction.Down, event, true)) {
                 
                 this.moving = true;
                 this.moveTimer = 0.0;
@@ -406,7 +444,7 @@ export class Stage {
         let wave : number;
 
         dy += YOFF;
-
+        
         canvas.setFillColor(170, 255, 255);
         for (let x = 0; x < 16; ++ x) {
 
@@ -505,6 +543,11 @@ export class Stage {
         }
 
         this.staticAnimationTimer = (this.staticAnimationTimer + STATIC_ANIMATION_SPEED*event.step) % 1.0;
+
+        for (let s of this.stars) {
+
+            s.update(event);
+        }
     }
 
 
@@ -513,5 +556,10 @@ export class Stage {
         this.drawNonTerrainStaticTiles(canvas, bmpBase);
         this.drawTerrain(canvas, bmpBase);
         animate(this.activeState, this.moveData, this.moveTimer, canvas, bmpBase);
+
+        for (let s of this.stars) {
+
+            s.draw(canvas);
+        }
     }
 }

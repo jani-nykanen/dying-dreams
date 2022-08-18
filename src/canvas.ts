@@ -300,6 +300,28 @@ export class Canvas {
     }
 
 
+    public fillRegularStar(cx : number, cy : number, radius : number) : Canvas {
+
+        let leftx = Math.round(Math.sin(-Math.PI*2/3) * radius);
+        let bottomy = -Math.round(Math.cos(-Math.PI*2/3) * radius);
+
+        let x = 0;
+        let stepx = bottomy / Math.abs(leftx);
+
+        let rx : number;
+
+        for (let y = -radius; y <= bottomy; ++ y, x += stepx) {
+
+            rx = Math.round(x);
+
+            this.fillRect(cx - rx, cy + y, rx*2, 1);
+            this.fillRect(cx - rx, cy + radius - bottomy*2 - y,  rx*2, 1);
+        }
+
+        return this;
+    }
+
+
     // Looks silly, but it is here for abstraction
     public convertToBitmap = () : Bitmap => this.canvas;
 }
