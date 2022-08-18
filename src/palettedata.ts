@@ -4,8 +4,8 @@
 const TILESET_BLOCK_1 = [ 
     0,
     0b100101,
-    0b011011,
-    0b111111
+    0b000110,
+    0b011011
 ];
 const TILESET_BLOCK_2 = [ 
     0,
@@ -23,19 +23,19 @@ const TILESET_BLOCK_4 = [
     0,
     0b100101,
     0b111001,
-    0b111111
+    0b011011
 ];
 const TILESET_BLOCK_5 = [ 
     0,
     0b100101,
     0b111001,
-    0b011011
+    0b000110
 ];
 const TILESET_BLOCK_6 = [ 
     0,
     -1,
-    0b011011,
-    0b111111
+    0b000110,
+    0b011011
 ];
 const TILESET_BLOCK_7 = [ 
     0,
@@ -48,8 +48,8 @@ const TILESET_BLOCK_7 = [
 // Figures
 const FIGURE_BLOCK = [ 
     0,
-    0b100100,
-    0b111000,
+    0b101011,
+    0b111111,
     -1
 ];
 
