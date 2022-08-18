@@ -194,6 +194,38 @@ export class Canvas {
     }
 
 
+    // Note: this method does not support flipping (reason: laziness, also 
+    // don't need it here)
+    public drawHorizontallyWavingBitmapRegion(bmp : Bitmap | null, 
+        sx : number, sy : number, sw : number, sh : number, 
+        dx : number, dy : number,
+        wave : number, period : number, amplitude : number) : Canvas {
+
+        if (bmp == null)
+            return this;
+
+        sx |= 0;
+        sy |= 0;
+        sw |= 0;
+        sh |= 0;
+
+        dx |= 0;
+        dy |= 0;    
+
+        let w = 0.0;
+        let tx : number;
+
+        for (let y = 0; y < sh; ++ y) {
+
+            w = wave + period * y;
+            tx = dx + Math.round(Math.sin(w) * amplitude);
+
+            this.ctx.drawImage(bmp, sx, sy + y, sw, 1, tx, dy + y, sw, 1);
+        }
+        return this;
+    }
+
+
     public drawText(font : Bitmap | null, str : string, 
         dx : number, dy : number, 
         xoff = 0.0, yoff = 0.0, align = TextAlign.Left) : Canvas {

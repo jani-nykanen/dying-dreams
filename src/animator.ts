@@ -24,9 +24,9 @@ const drawHuman = (canvas : Canvas, bmp : Bitmap,
 
     // Check if climbing
     if (!horizontal &&
-        (state.getStaticTile(x, y) == 2 &&
-        (state.getStaticTile(x, y+1) != 1 || direction == Direction.Down)) ||
-        (direction == Direction.Up && state.getStaticTile(x, y+1) == 2)) {
+        (state.getTile(0, x, y) == 2 &&
+        (state.getTile(0, x, y+1) != 1 || direction == Direction.Down)) ||
+        (direction == Direction.Up && state.getTile(0, x, y+1) == 2)) {
 
         climbing = true;
         frame = 0;
@@ -37,21 +37,21 @@ const drawHuman = (canvas : Canvas, bmp : Bitmap,
     }
     // Or falling
     else if (direction == Direction.Down && 
-        state.getStaticTile(x, y) != 2 && 
-        state.getTile(x, y+1) != 4) {
+        state.getTile(0, x, y) != 2 && 
+        state.getTile(1, x, y+1) != 4) {
 
         frame = 5;
     }
     // Or not being carried, so can be animated
     else if (direction != Direction.None && 
-        (state.getTile(x, y+1) != 4 || 
+        (state.getTile(1, x, y+1) != 4 || 
         (y < state.height-1 && moveData[(y+1) * state.width + x] == Direction.None))) {
 
         frame = 1 + Math.floor(4 * animTimer);
     }
 
     let sy = 16;
-    if (state.getTile(x, y-1) == 4)
+    if (state.getTile(1, x, y-1) == 4)
                 sy = 32;
 
     if (climbing) {
@@ -80,7 +80,7 @@ export const animate = (state : PuzzleState,
     let dy = 0;
     let direction : Direction;
 
-    state.iterate((x : number, y : number, value : number) => {
+    state.iterate(1, (x : number, y : number, value : number) => {
 
         direction = moveData[y * state.width + x];
 

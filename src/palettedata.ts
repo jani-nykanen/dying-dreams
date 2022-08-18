@@ -54,6 +54,23 @@ const FIGURE_BLOCK = [
 ];
 
 
+// Flame
+const FLAME_1 = [
+
+    0,
+    0b110100,
+    0b111000,
+    -1
+];
+const FLAME_2 = [
+
+    0,
+    0b111101,
+    0b111000,
+    -1
+];
+
+
 
 // TODO: Lines 3-6 could be filled with... well, fill. Would save some bytes
 export const PALETTE1 = [
@@ -80,10 +97,10 @@ export const PALETTE1 = [
     // Line 5
     FIGURE_BLOCK, FIGURE_BLOCK, FIGURE_BLOCK, FIGURE_BLOCK,
     FIGURE_BLOCK, FIGURE_BLOCK, FIGURE_BLOCK, FIGURE_BLOCK,
-    FIGURE_BLOCK, FIGURE_BLOCK,
+    FLAME_1, FLAME_1,
 
     // Line 6
     FIGURE_BLOCK, FIGURE_BLOCK, FIGURE_BLOCK, FIGURE_BLOCK,
     FIGURE_BLOCK, FIGURE_BLOCK, FIGURE_BLOCK, FIGURE_BLOCK,
-    FIGURE_BLOCK, FIGURE_BLOCK,
+    FLAME_2, FLAME_1,
 ];

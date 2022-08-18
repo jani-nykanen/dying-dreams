@@ -21,20 +21,22 @@ export const enum Direction {
 
 export class PuzzleState {
 
-    private tiles : Array<number>;
-    private flip : Flip;
+    private layers : Array<Array<number>>;
 
-    private readonly staticTiles : Array<number>;
+    private flip : Flip;
 
     public readonly width : number;
     public readonly height : number;
 
 
-    constructor(data : Array<number>, staticTiles : Array<number>,
+    constructor(staticLayer : Array<number>, dynamicLayer : Array<number>,
         width : number, height : number, flip : Flip) {
 
-        this.tiles = Array.from(data);
-        this.staticTiles = staticTiles; // Note: we copy the reference, NOT make a copy!
+        this.layers = new Array<Array<number>> (2);
+
+        this.layers[0] = Array.from(staticLayer);
+        this.layers[1] = Array.from(dynamicLayer);
+
         this.flip = flip;
 
         this.width = width;
@@ -42,30 +44,21 @@ export class PuzzleState {
     }
 
 
-    public getTile(x : number, y : number, def = 1) : number {
+    public getTile(layer : 0 | 1, x : number, y : number, def = 1) : number {
 
         if (x < 0 || y < 0 || x >= this.width || y >= this.height)
             return def;
 
-        return this.tiles[y*this.width + x];
+        return this.layers[layer][y*this.width + x];
     }
 
 
-    public getStaticTile(x : number, y : number, def = 1) : number {
-        
-        if (x < 0 || y < 0 || x >= this.width || y >=  this.height)
-            return def;
-
-        return this.staticTiles[y*this.width + x];
-    }
-
-
-    public setTile(x : number, y : number, v : number) : void {
+    public setTile(layer : 0 | 1, x : number, y : number, v : number) : void {
         
         if (x < 0 || y < 0 || x >= this.width || y >= this.height)
             return;
 
-        this.tiles[y*this.width + x] = v;
+        this.layers[layer][y*this.width + x] = v;
     }
 
 
@@ -81,20 +74,22 @@ export class PuzzleState {
     }
 
 
-    public iterate(cb : (x : number, y : number, value : number) => void) : void {
+    public iterate(layer : number, cb : (x : number, y : number, value : number) => void) : void {
 
         let i = 0;
         for (let dy = 0; dy < this.height; ++ dy) {
 
             for (let dx = 0; dx < this.width; ++ dx) {
 
-                cb(dx, dy, this.tiles[i ++]);
+                cb(dx, dy, this.layers[layer][i ++]);
             }
         }
     }
 
 
-    public clone = () : PuzzleState => new PuzzleState(this.tiles, this.staticTiles, this.width, this.height, this.flip);
+    public clone = () : PuzzleState => new PuzzleState(
+        this.layers[0], this.layers[1], 
+        this.width, this.height, this.flip);
 }
 
 
@@ -113,6 +108,8 @@ export class Stage {
     private moving = false;
     private falling = false;
 
+    private staticAnimationTimer = 0.0;
+
     public readonly width = 10;
     public readonly height = 9;
 
@@ -123,8 +120,8 @@ export class Stage {
 
         this.states = new Array<PuzzleState> ();
         this.activeState = new PuzzleState(
-            this.baseTilemap.map(v => Number(DYNAMIC_TILES.includes(v)) * v),
             this.baseTilemap,
+            this.baseTilemap.map(v => Number(DYNAMIC_TILES.includes(v)) * v),
             this.width, this.height, Flip.None);
 
         this.moveData = (new Array<Direction> (this.width*this.height)).fill(Direction.None);
@@ -135,8 +132,8 @@ export class Stage {
 
     private isReserved(x : number, y : number) : boolean {
 
-        return [1, 3].includes(this.activeState.getStaticTile(x, y)) ||
-               this.activeState.getTile(x, y) == 4;
+        return [1, 3].includes(this.activeState.getTile(0, x, y)) ||
+               this.activeState.getTile(1, x, y) == 4;
     }
 
 
@@ -147,14 +144,14 @@ export class Stage {
         if (direction == Direction.Left || direction == Direction.Right)
             return true;
 
-        let tid = this.activeState.getStaticTile(x, y);
+        let tid = this.activeState.getTile(0, x, y);
         let ret = tid == 2;
         if (!ret) {
 
             if (direction == Direction.Down) {
 
-                return this.activeState.getStaticTile(x, y+1) == 2 ||
-                    (!falling && y < this.height-1 && this.activeState.getTile(x, y+2) == 4);
+                return this.activeState.getTile(0, x, y+1) == 2 ||
+                    (!falling && y < this.height-1 && this.activeState.getTile(1, x, y+2) == 4);
             }
             else if (tid == 0) {
 
@@ -162,9 +159,9 @@ export class Stage {
 
                     // Need to use the old state here...
                     // TODO: Does this cause problems?
-                    if (this.oldState?.getTile(x, dy) != 4)
+                    if (this.oldState?.getTile(1, x, dy) != 4)
                         break;
-                    if (this.oldState?.getStaticTile(x, dy) == 2)
+                    if (this.oldState?.getTile(0, x, dy) == 2)
                         return true;
                 }
             }
@@ -195,7 +192,7 @@ export class Stage {
         do {
 
             changed = false;
-            this.activeState.iterate((x : number, y : number, v : number) => {
+            this.activeState.iterate(1, (x : number, y : number, v : number) => {
 
                 switch (v) {
 
@@ -206,8 +203,8 @@ export class Stage {
                         !this.isReserved(x + dx, y + dy) &&
                         this.checkLadder(x, y, direction, fallCheck) == !fallCheck) {
 
-                        this.activeState.setTile(x, y, 0);
-                        this.activeState.setTile(x + dx, y + dy, 4);
+                        this.activeState.setTile(1, x, y, 0);
+                        this.activeState.setTile(1, x + dx, y + dy, 4);
 
                         this.moveData[(y + dy) * this.width + (x + dx)] = direction;
 
@@ -270,6 +267,25 @@ export class Stage {
     }
 
 
+    private checkStaticTileEvents(event : CoreEvent) : boolean {
+
+        let somethingHappened = false;
+
+        this.activeState.iterate(0, (x : number, y : number, v : number) => {
+
+            if (this.activeState.getTile(1, x, y) == 4 &&
+                this.activeState.getTile(0, x, y) == 5) {
+
+                for (let i = 0; i <= 1; ++ i)
+                    this.activeState.setTile(i as (0 | 1), x, y, 0);
+
+                somethingHappened = true;
+            }
+        });
+        return somethingHappened;
+    }
+
+
     private move(event : CoreEvent) : void {
 
         const MOVE_SPEED_BASE = 1.0/16.0;
@@ -279,6 +295,8 @@ export class Stage {
             return;
 
         let moveSpeed = this.falling ? MOVE_SPEED_FALL : MOVE_SPEED_BASE;
+        let fall = false;
+        let tileEvent = false;
 
         if ((this.moveTimer += moveSpeed * event.step) >= 1.0) {
 
@@ -287,8 +305,10 @@ export class Stage {
 
             this.moveData.fill(Direction.None);
 
-            // Check falling
-            if (this.handleAction(Direction.Down, event, true)) {
+            tileEvent = this.checkStaticTileEvents(event);
+            fall = this.handleAction(Direction.Down, event, true);
+
+            if (fall || tileEvent) {
                 
                 this.moving = true;
                 this.moveTimer = 0.0;
@@ -339,14 +359,28 @@ export class Stage {
 
                     canvas.setFillColor(255, 170, 85)
                           .fillRect(x*8, y*8, 8, 8);
-                    continue;
                 }
-                -- tid;
+                else {
+                    
+                    -- tid;
 
-                sx = tid % COLUMN_COUNT;
-                sy = (tid / COLUMN_COUNT) | 0;
+                    sx = tid % COLUMN_COUNT;
+                    sy = (tid / COLUMN_COUNT) | 0;
 
-                canvas.drawBitmapRegion(bmp, sx*8, sy*8, 8, 8, x*8, y*8);
+                    canvas.drawBitmapRegion(bmp, sx*8, sy*8, 8, 8, x*8, y*8);
+                }
+
+                // Tile correction
+                if (y > 0) {
+
+                    tid = this.terrainMap[(y-1) * this.width * 2 + x]
+                    if (tid >= 1 && tid <= 3) {
+
+                        canvas.setFillColor(170, 85, 85)
+                            .fillRect(x*8+2, y*8, 4, 1);
+                            
+                    }
+                }
             }
         }
     }
@@ -356,55 +390,61 @@ export class Stage {
 
         const BRIDGE_OFF = -2;
 
-        let tid : number;
         let dx : number;
         let dy : number;
 
-        for (let y = 0; y < this.height; ++ y) {
+        this.activeState.iterate(0, (x : number, y : number, v : number) => {
 
-            for (let x = 0; x < this.width; ++ x) {
+            dx = x*16;
+            dy = y*16;
 
-                dx = x*16;
-                dy = y*16;
+            switch (v) {
 
-                tid = this.baseTilemap[y*this.width + x];
-                switch (tid) {
+            // Ladder
+            case 2:
 
-                // Ladder
-                case 2:
+                for (let j = 0; j < 2; ++ j) {
 
-                    for (let j = 0; j < 2; ++ j) {
-
-                        canvas.drawBitmapRegion(bmp, 56, 0, 8, 8, dx, dy + j*8)
-                            .drawBitmapRegion(bmp, 56, 0, 8, 8, dx+8, dy + j*8, Flip.Horizontal);
-                    }
-
-                    if (y > 0 && this.baseTilemap[(y-1)*this.width + x] != 2) {
-
-                        dy -= 8;
-                        canvas.drawBitmapRegion(bmp, 56, 8, 8, 8, dx, dy)
-                              .drawBitmapRegion(bmp, 56, 8, 8, 8, dx+8, dy, Flip.Horizontal);  
-                    }
-                    break;
-
-                // Bridge
-                case 3:
-
-                    for (let i = 0; i < 2; ++ i) {
-
-                        canvas.drawBitmapRegion(bmp, 64, 0, 8, 16, dx + i*8, dy + BRIDGE_OFF);
-                    }
-                    break;
-
-                default:
-                    break;
+                    canvas.drawBitmapRegion(bmp, 56, 0, 8, 8, dx, dy + j*8)
+                        .drawBitmapRegion(bmp, 56, 0, 8, 8, dx+8, dy + j*8, Flip.Horizontal);
                 }
+
+                if (y > 0 && this.baseTilemap[(y-1)*this.width + x] != 2) {
+
+                    dy -= 8;
+                    canvas.drawBitmapRegion(bmp, 56, 8, 8, 8, dx, dy)
+                            .drawBitmapRegion(bmp, 56, 8, 8, 8, dx+8, dy, Flip.Horizontal);  
+                }
+                 break;
+
+            // Bridge
+            case 3:
+
+                for (let i = 0; i < 2; ++ i) {
+
+                    canvas.drawBitmapRegion(bmp, 64, 0, 8, 16, dx + i*8, dy + BRIDGE_OFF);
+                }
+                break;
+
+            // Flame
+            case 5:
+
+                canvas.drawHorizontallyWavingBitmapRegion(
+                    bmp, 64, 32, 16, 16, dx, dy,
+                    this.staticAnimationTimer * Math.PI*2,
+                    Math.PI*4 / 16, 1);
+                break;
+
+            default:
+                break;
             }
-        }
+        });
     }
 
 
     public update(event : CoreEvent) : void {
+
+        const STATIC_ANIMATION_SPEED = 0.025;
 
         this.move(event);
         this.control(event);
@@ -413,6 +453,8 @@ export class Stage {
 
             this.undo();
         }
+
+        this.staticAnimationTimer = (this.staticAnimationTimer + STATIC_ANIMATION_SPEED*event.step) % 1.0;
     }
 
 
