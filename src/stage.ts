@@ -180,8 +180,7 @@ export class Stage {
 
     private spawnRubble(x : number, y : number) : void {
 
-        const MIN_SPEED = 0.5;
-        const MAX_SPEED = 2.0;
+        const INITIAL_SPEEDS = [0.5, 1.5, 2.5, 3.5];
 
         for (let dy = 0; dy < 2; ++ dy) {
 
@@ -189,7 +188,7 @@ export class Stage {
 
                 (nextParticle(this.rubble, RubbleParticle) as RubbleParticle)
                     .spawn(x + dx*8 + 4, y + dy*8 + 4,
-                        0, MIN_SPEED + (Math.random() * (MAX_SPEED - MIN_SPEED)),
+                        0, INITIAL_SPEEDS[dy*2 + dx],
                         dy*2 + dx);
             }
         }
