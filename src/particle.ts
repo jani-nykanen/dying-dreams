@@ -62,6 +62,19 @@ export class Particle {
     }
 
 
+    public spawnBase(x : number, y : number, sx : number, sy : number) : void {
+
+        const GRAVITY = 4.0;
+
+        this.pos = new Vector2(x, y);
+        this.speed = new Vector2(sx, sy);
+        this.target.x = this.speed.x;
+        this.target.y = GRAVITY;
+
+        this.exist = true;
+    }
+
+
     public draw(canvas : Canvas, bmp? : Bitmap) : void {}
 
 
@@ -117,18 +130,51 @@ export class StarParticle extends Particle {
 
     public spawn(x : number, y : number, sx : number, sy : number, color : RGBA) {
 
-        const GRAVITY = 4.0;
-
-        this.pos = new Vector2(x, y);
-        this.speed = new Vector2(sx, sy);
-        this.target.x = this.speed.x;
-        this.target.y = GRAVITY;
-
-        this.exist = true;
-
+        this.spawnBase(x, y, sx, sy);
         this.color = color.clone();
     }
 }
+
+
+export class RubbleParticle extends Particle {
+
+
+    private tileIndex : number = 0;
+
+
+    constructor() {
+
+        super();
+
+        this.friction.x = 0;
+        this.friction.y = 0.10;
+        this.radius = 8;
+    }
+
+
+    public draw(canvas : Canvas, bmp : Bitmap) {
+
+        if (!this.exist)
+            return;
+
+        let px = Math.round(this.pos.x);
+        let py = Math.round(this.pos.y);
+
+        let srcx = 80 + (this.tileIndex % 2) * 8;
+        let srcy = Math.floor(this.tileIndex/2) * 8;
+
+        canvas.drawBitmapRegion(bmp, srcx, srcy, 8, 8,
+            px-4, py-4);
+    }
+
+
+    public spawn(x : number, y : number, sx : number, sy : number, tileIndex : number) {
+
+        this.spawnBase(x, y, sx, sy);
+        this.tileIndex = tileIndex;
+    }
+}
+
 
 
 export const nextParticle = (arr : Array<Particle>, type : Function) : Particle => {

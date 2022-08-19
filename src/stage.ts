@@ -2,7 +2,7 @@ import { animate } from "./animator.js";
 import { Bitmap, Canvas, Flip } from "./canvas.js";
 import { CoreEvent } from "./core.js";
 import { KeyState } from "./keyboard.js";
-import { nextParticle, StarParticle } from "./particle.js";
+import { nextParticle, RubbleParticle, StarParticle } from "./particle.js";
 import { COLUMN_COUNT, createTerrainMap } from "./terrainmap.js";
 import { RGBA } from "./vector.js";
 
@@ -113,6 +113,7 @@ export class Stage {
     private staticAnimationTimer = 0.0;
 
     private stars : Array<StarParticle>;
+    private rubble : Array<RubbleParticle>;
 
     public readonly width = 10;
     public readonly height = 9;
@@ -133,12 +134,13 @@ export class Stage {
         this.terrainMap = createTerrainMap(this.baseTilemap, this.width, this.height);
 
         this.stars = new Array<StarParticle> ();
+        this.rubble = new Array<RubbleParticle> ();
     }
 
 
     private isReserved(x : number, y : number) : boolean {
 
-        return [1, 3, 8].includes(this.activeState.getTile(0, x, y)) ||
+        return [1, 3, 8, 9].includes(this.activeState.getTile(0, x, y)) ||
                this.activeState.getTile(1, x, y) == 4;
     }
 
@@ -173,6 +175,24 @@ export class Stage {
             }
         }
         return ret;
+    }
+
+
+    private spawnRubble(x : number, y : number) : void {
+
+        const MIN_SPEED = 0.5;
+        const MAX_SPEED = 2.0;
+
+        for (let dy = 0; dy < 2; ++ dy) {
+
+            for (let dx = 0; dx < 2; ++ dx) {
+
+                (nextParticle(this.rubble, RubbleParticle) as RubbleParticle)
+                    .spawn(x + dx*8 + 4, y + dy*8 + 4,
+                        0, MIN_SPEED + (Math.random() * (MAX_SPEED - MIN_SPEED)),
+                        dy*2 + dx);
+            }
+        }
     }
 
 
@@ -211,6 +231,12 @@ export class Stage {
 
                         this.activeState.setTile(1, x, y, 0);
                         this.activeState.setTile(1, x + dx, y + dy, 4);
+
+                        if (!fallCheck && y < this.height-1 && this.activeState.getTile(0, x, y+1) == 9) {
+
+                            this.activeState.setTile(0, x, y+1, 0);
+                            this.spawnRubble(x*16, (y+1)*16);
+                        }
 
                         this.moveData[(y + dy) * this.width + (x + dx)] = direction;
 
@@ -523,6 +549,12 @@ export class Stage {
                 canvas.drawBitmapRegion(bmp, 80, 32, 16, 16, dx, dy);
                 break;
 
+            // Breaking block
+            case 9:
+
+                canvas.drawBitmapRegion(bmp, 80, 0, 16, 16, dx, dy);
+                break;
+
             default:
                 break;
             }
@@ -544,6 +576,10 @@ export class Stage {
 
         this.staticAnimationTimer = (this.staticAnimationTimer + STATIC_ANIMATION_SPEED*event.step) % 1.0;
 
+        for (let r of this.rubble) {
+
+            r.update(event);
+        }
         for (let s of this.stars) {
 
             s.update(event);
@@ -555,6 +591,12 @@ export class Stage {
     
         this.drawNonTerrainStaticTiles(canvas, bmpBase);
         this.drawTerrain(canvas, bmpBase);
+
+        for (let r of this.rubble) {
+
+            r.draw(canvas, bmpBase);
+        }
+
         animate(this.activeState, this.moveData, this.moveTimer, canvas, bmpBase);
 
         for (let s of this.stars) {
