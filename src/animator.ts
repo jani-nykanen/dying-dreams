@@ -67,8 +67,6 @@ const drawHuman = (canvas : Canvas, bmp : Bitmap,
 }
 
 
-
-// TODO: Split to pieces
 export const animate = (state : PuzzleState, 
     moveData : Array<Direction>, animTimer : number,
     canvas : Canvas, bmp : Bitmap) : void => {
@@ -98,6 +96,12 @@ export const animate = (state : PuzzleState,
         // Human
         case 4:
             drawHuman(canvas, bmp, x, y, dx, dy, direction, state, animTimer, moveData);
+            break;
+
+        // Boulder
+        case 10:
+
+            canvas.drawBitmapRegion(bmp, 80, 16, 16, 16, dx, dy+1);
             break;
 
         default:

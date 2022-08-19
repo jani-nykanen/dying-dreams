@@ -7,7 +7,7 @@ import { COLUMN_COUNT, createTerrainMap } from "./terrainmap.js";
 import { RGBA } from "./vector.js";
 
 
-const DYNAMIC_TILES = [4];
+const DYNAMIC_TILES = [4, 10];
 const STATE_BUFFER_MAX = 64;
 
 
@@ -140,8 +140,11 @@ export class Stage {
 
     private isReserved(x : number, y : number) : boolean {
 
-        return [1, 3, 8, 9].includes(this.activeState.getTile(0, x, y)) ||
-               this.activeState.getTile(1, x, y) == 4;
+        let bottom = this.activeState.getTile(0, x, y);
+        let top = this.activeState.getTile(1, x, y);
+        
+        return [1, 3, 8, 9].includes(bottom) ||
+               top == 4 || top == 10;
     }
 
 
@@ -248,6 +251,28 @@ export class Stage {
                             this.activeState.setFlip(Flip.None);
                         }
 
+                        moved = true;
+                        changed = true;
+                    }
+                    break;
+
+                // Boulder
+                case 10:
+
+                    if (!fallCheck && (direction == Direction.Up || direction == Direction.Down)) {
+                        
+                        break;
+                    }
+
+                    // TODO: Add support for moving multiple boulders!
+                    if (this.moveData[y*this.width + x] == Direction.None && 
+                        !this.isReserved(x + dx, y + dy) &&
+                        (fallCheck || this.oldState?.getTile(1, x - dx, y) == 4)) {
+
+                        this.activeState.setTile(1, x, y, 0);
+                        this.activeState.setTile(1, x + dx, y + dy, 10);
+
+                        this.moveData[(y + dy) * this.width + (x + dx)] = direction;
                         moved = true;
                         changed = true;
                     }
