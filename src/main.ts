@@ -15,6 +15,7 @@ window.onload = () => {
             .addAction("left", "ArrowLeft", "KeyA")
             .addAction("down", "ArrowDown", "KeyS")
             .addAction("undo", "Backspace", "KeyZ")
+            .addAction("restart", "KeyR")
             .addAction("start", "Enter")
             .addAction("select", "Space");
             

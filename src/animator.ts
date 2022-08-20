@@ -1,5 +1,5 @@
 import { Bitmap, Canvas, Flip } from "./canvas.js";
-import { Direction, PuzzleState } from "./stage.js";
+import { Direction, PuzzleState } from "./puzzlestate";
 
 
 //

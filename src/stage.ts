@@ -3,96 +3,14 @@ import { Bitmap, Canvas, Flip } from "./canvas.js";
 import { CoreEvent } from "./core.js";
 import { KeyState } from "./keyboard.js";
 import { nextParticle, RubbleParticle, StarParticle } from "./particle.js";
+import { Direction, PuzzleState } from "./puzzlestate.js";
 import { COLUMN_COUNT, createTerrainMap } from "./terrainmap.js";
 import { RGBA } from "./vector.js";
 
 
+const SOLID_TILES = [1, 3, 8, 9, 13];
 const DYNAMIC_TILES = [4, 10];
 const STATE_BUFFER_MAX = 64;
-
-
-export const enum Direction {
-
-    None = 0,
-    Right = 1,
-    Up = 2,
-    Left = 3,
-    Down = 4
-};
-
-
-export class PuzzleState {
-
-    private layers : Array<Array<number>>;
-
-    private flip : Flip;
-
-    public readonly width : number;
-    public readonly height : number;
-
-
-    constructor(staticLayer : Array<number>, dynamicLayer : Array<number>,
-        width : number, height : number, flip : Flip) {
-
-        this.layers = new Array<Array<number>> (2);
-
-        this.layers[0] = Array.from(staticLayer);
-        this.layers[1] = Array.from(dynamicLayer);
-
-        this.flip = flip;
-
-        this.width = width;
-        this.height = height;
-    }
-
-
-    public getTile(layer : 0 | 1, x : number, y : number, def = 1) : number {
-
-        if (x < 0 || y < 0 || x >= this.width || y >= this.height)
-            return def;
-
-        return this.layers[layer][y*this.width + x];
-    }
-
-
-    public setTile(layer : 0 | 1, x : number, y : number, v : number) : void {
-        
-        if (x < 0 || y < 0 || x >= this.width || y >= this.height)
-            return;
-
-        this.layers[layer][y*this.width + x] = v;
-    }
-
-
-    public getFlip() : Flip {
-
-        return this.flip;
-    }
-
-
-    public setFlip(flip : Flip) : void {
-
-        this.flip = flip;
-    }
-
-
-    public iterate(layer : number, cb : (x : number, y : number, value : number) => void) : void {
-
-        let i = 0;
-        for (let dy = 0; dy < this.height; ++ dy) {
-
-            for (let dx = 0; dx < this.width; ++ dx) {
-
-                cb(dx, dy, this.layers[layer][i ++]);
-            }
-        }
-    }
-
-
-    public clone = () : PuzzleState => new PuzzleState(
-        this.layers[0], this.layers[1], 
-        this.width, this.height, this.flip);
-}
 
 
 export class Stage {
@@ -103,7 +21,7 @@ export class Stage {
 
     private states : Array<PuzzleState>;
     private activeState : PuzzleState;
-    private oldState : PuzzleState | null = null;
+    private oldState : PuzzleState;
     private moveData : Array<Direction>;
 
     private moveTimer = 0.0;
@@ -128,6 +46,7 @@ export class Stage {
             this.baseTilemap,
             this.baseTilemap.map(v => Number(DYNAMIC_TILES.includes(v)) * v),
             this.width, this.height, Flip.None);
+        this.oldState = this.activeState.clone();
 
         this.moveData = (new Array<Direction> (this.width*this.height)).fill(Direction.None);
 
@@ -143,7 +62,7 @@ export class Stage {
         let bottom = this.activeState.getTile(0, x, y);
         let top = this.activeState.getTile(1, x, y);
         
-        return [1, 3, 8, 9].includes(bottom) ||
+        return SOLID_TILES.includes(bottom) ||
                top == 4 || top == 10;
     }
 
@@ -170,9 +89,9 @@ export class Stage {
 
                     // Need to use the old state here...
                     // TODO: Does this cause problems?
-                    if (this.oldState?.getTile(1, x, dy) != 4)
+                    if (this.oldState.getTile(1, x, dy) != 4)
                         break;
-                    if (this.oldState?.getTile(0, x, dy) == 2)
+                    if (this.oldState.getTile(0, x, dy) == 2)
                         return true;
                 }
             }
@@ -195,6 +114,80 @@ export class Stage {
                         dy*2 + dx);
             }
         }
+    }
+
+
+    private controlPlayer(x : number, y : number, dx : number, dy : number, 
+        direction : Direction, fallCheck = false) : boolean {
+
+        if (this.moveData[y*this.width + x] != Direction.None ||
+            this.isReserved(x + dx, y + dy) ||
+            this.checkLadder(x, y, direction, fallCheck) == fallCheck) {
+
+            return false;
+        }
+
+        this.activeState.setTile(1, x, y, 0);
+        this.activeState.setTile(1, x + dx, y + dy, 4);
+
+        if (!fallCheck && y < this.height-1 && this.activeState.getTile(0, x, y+1) == 9) {
+
+            this.activeState.setTile(0, x, y+1, 0);
+            this.spawnRubble(x*16, (y+1)*16);
+        }
+
+        this.moveData[(y + dy) * this.width + (x + dx)] = direction;
+
+        if (direction == Direction.Left) {
+
+            this.activeState.setFlip(Flip.Horizontal);
+        }
+        else if (direction == Direction.Right) {
+
+            this.activeState.setFlip(Flip.None);
+        }
+        return true;
+    }
+
+    
+    private controlBoulder(x : number, y : number, dx : number, dy : number, 
+        direction : Direction, fallCheck = false) : boolean {
+
+        if (!fallCheck && 
+            (direction == Direction.Up || direction == Direction.Down)) {
+
+            return false;
+        }
+
+        if (this.moveData[y*this.width + x] != Direction.None || 
+            this.isReserved(x + dx, y + dy)) {
+
+            return false;
+        }
+
+        let move = fallCheck;
+
+        if (!move) {
+
+            // Check if a player in the correct direction
+            for (let ty = y; ty < this.height; ++ ty) {
+
+                if (this.oldState.getTile(1, x, ty) != 10)
+                    return false;
+
+                if (this.oldState.getTile(1, x - dx, ty) == 4) {
+
+                    move = true;
+                    break;
+                }
+            }
+        }
+
+        this.activeState.setTile(1, x, y, 0);
+        this.activeState.setTile(1, x + dx, y + dy, 10);
+        this.moveData[(y + dy) * this.width + (x + dx)] = direction;
+
+        return true;
     }
 
 
@@ -227,29 +220,7 @@ export class Stage {
                 // Player
                 case 4:
 
-                    if (this.moveData[y*this.width + x] == Direction.None &&
-                        !this.isReserved(x + dx, y + dy) &&
-                        this.checkLadder(x, y, direction, fallCheck) == !fallCheck) {
-
-                        this.activeState.setTile(1, x, y, 0);
-                        this.activeState.setTile(1, x + dx, y + dy, 4);
-
-                        if (!fallCheck && y < this.height-1 && this.activeState.getTile(0, x, y+1) == 9) {
-
-                            this.activeState.setTile(0, x, y+1, 0);
-                            this.spawnRubble(x*16, (y+1)*16);
-                        }
-
-                        this.moveData[(y + dy) * this.width + (x + dx)] = direction;
-
-                        if (direction == Direction.Left) {
-
-                            this.activeState.setFlip(Flip.Horizontal);
-                        }
-                        else if (direction == Direction.Right) {
-
-                            this.activeState.setFlip(Flip.None);
-                        }
+                    if (this.controlPlayer(x, y, dx, dy, direction, fallCheck)) {
 
                         moved = true;
                         changed = true;
@@ -259,20 +230,8 @@ export class Stage {
                 // Boulder
                 case 10:
 
-                    if (!fallCheck && (direction == Direction.Up || direction == Direction.Down)) {
-                        
-                        break;
-                    }
+                    if (this.controlBoulder(x, y, dx, dy, direction, fallCheck)) {
 
-                    // TODO: Add support for moving multiple boulders!
-                    if (this.moveData[y*this.width + x] == Direction.None && 
-                        !this.isReserved(x + dx, y + dy) &&
-                        (fallCheck || this.oldState?.getTile(1, x - dx, y) == 4)) {
-
-                        this.activeState.setTile(1, x, y, 0);
-                        this.activeState.setTile(1, x + dx, y + dy, 10);
-
-                        this.moveData[(y + dy) * this.width + (x + dx)] = direction;
                         moved = true;
                         changed = true;
                     }
@@ -389,6 +348,16 @@ export class Stage {
     }
 
 
+    private pushState() : void {
+
+        this.states.push(this.oldState.clone());
+        if (this.states.length >= STATE_BUFFER_MAX) {
+
+            this.states.shift();
+        }
+    }
+
+
     private move(event : CoreEvent) : void {
 
         const MOVE_SPEED_BASE = 1.0/16.0;
@@ -416,11 +385,7 @@ export class Stage {
             }
             else if (this.oldState != null) {
 
-                this.states.push(this.oldState.clone());
-                if (this.states.length >= STATE_BUFFER_MAX) {
-
-                    this.states.shift();
-                }
+                this.pushState();
             }
         }
     }
@@ -437,6 +402,19 @@ export class Stage {
         this.moving = false;
         this.moveTimer = 0;
         this.moveData.fill(Direction.None);
+    }
+
+
+    private restart() : void {
+
+        this.pushState();
+        this.activeState = new PuzzleState(
+            this.baseTilemap,
+            this.baseTilemap.map(v => Number(DYNAMIC_TILES.includes(v)) * v),
+            this.width, this.height, Flip.None);
+        this.moveData = (new Array<Direction> (this.width*this.height)).fill(Direction.None);
+
+        this.activeState.setFlip(Flip.None);
     }
 
 
@@ -579,6 +557,19 @@ export class Stage {
                 canvas.drawBitmapRegion(bmp, 80, 0, 16, 16, dx, dy);
                 break;
 
+            // Button
+            case 11:
+
+                canvas.drawBitmapRegion(bmp, 48, 24, 16, 8, dx, dy+8);
+                break;
+
+            // Toggleable buttons
+            case 12:
+            case 13:
+
+                canvas.drawBitmapRegion(bmp, 96, 16 - (v-12)*16, 16, 16, dx, dy);
+                break;
+
             default:
                 break;
             }
@@ -596,6 +587,10 @@ export class Stage {
         if (event.keyboard.getActionState("undo") == KeyState.Pressed) {
 
             this.undo();
+        }
+        else if (event.keyboard.getActionState("restart") == KeyState.Pressed) {
+
+            this.restart();
         }
 
         this.staticAnimationTimer = (this.staticAnimationTimer + STATIC_ANIMATION_SPEED*event.step) % 1.0;
