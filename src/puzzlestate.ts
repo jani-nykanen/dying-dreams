@@ -14,15 +14,16 @@ export const enum Direction {
 export class PuzzleState {
 
     private layers : Array<Array<number>>;
-
     private flip : Flip;
+    private toggleWallsState : boolean;
 
     public readonly width : number;
     public readonly height : number;
 
 
     constructor(staticLayer : Array<number>, dynamicLayer : Array<number>,
-        width : number, height : number, flip : Flip) {
+        width : number, height : number, flip : Flip,
+        toggleWallsState = true) {
 
         this.layers = new Array<Array<number>> (2);
 
@@ -30,6 +31,7 @@ export class PuzzleState {
         this.layers[1] = Array.from(dynamicLayer);
 
         this.flip = flip;
+        this.toggleWallsState = toggleWallsState;
 
         this.width = width;
         this.height = height;
@@ -45,6 +47,15 @@ export class PuzzleState {
     }
 
 
+    public getIndexedTile(layer : 0 | 1, i : number, def = 1) : number {
+
+        if (i < 0 || i >= this.width*this.height)
+            return def;
+
+        return this.layers[layer][i];
+    }
+
+
     public setTile(layer : 0 | 1, x : number, y : number, v : number) : void {
         
         if (x < 0 || y < 0 || x >= this.width || y >= this.height)
@@ -54,9 +65,12 @@ export class PuzzleState {
     }
 
 
-    public getFlip() : Flip {
+    public setIndexedTile(layer : 0 | 1, i : number, v : number) : void {
 
-        return this.flip;
+        if (i < 0 || i >= this.width*this.height)
+            return;
+
+        this.layers[layer][i] = v;
     }
 
 
@@ -64,6 +78,14 @@ export class PuzzleState {
 
         this.flip = flip;
     }
+    public getFlip = () : Flip => this.flip;
+
+
+    public setToggleableWallState(state : boolean) : void {
+
+        this.toggleWallsState = state;
+    }
+    public getToggleableWallState = () : boolean => this.toggleWallsState;
 
 
     public iterate(layer : number, cb : (x : number, y : number, value : number) => void) : void {
@@ -81,5 +103,6 @@ export class PuzzleState {
 
     public clone = () : PuzzleState => new PuzzleState(
         this.layers[0], this.layers[1], 
-        this.width, this.height, this.flip);
+        this.width, this.height, this.flip,
+        this.toggleWallsState);
 }

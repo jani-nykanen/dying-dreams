@@ -303,6 +303,18 @@ export class Stage {
     }
 
 
+    private toggleBlocks() : void {
+
+        let tid : number;
+        for (let i = 0; i < this.width*this.height; ++ i) {
+
+            tid = this.activeState.getIndexedTile(0, i);
+            if (tid == 12 || tid == 13)
+                this.activeState.setIndexedTile(0, i, tid == 12 ? 13 : 12);
+        }
+    }
+
+
     private checkStaticTileEvents(event : CoreEvent) : boolean {
 
         const HURTING_TILES = [5, 6, 7];
@@ -314,20 +326,34 @@ export class Stage {
         ];
 
         let somethingHappened = false;
+        let hasUnpressedButtons = false;
+
         let bottom : number;
+        let top : number;
 
         let color : RGBA;
 
         this.activeState.iterate(0, (x : number, y : number, v : number) => {
 
             bottom = this.activeState.getTile(0, x, y);
+            top = this.activeState.getTile(1, x, y);
 
-            if (this.activeState.getTile(1, x, y) == 4 &&
-                HURTING_TILES.includes(bottom)) {
+            // Check buttons
+            if (bottom == 11 && top == 0 && !hasUnpressedButtons) {
+
+                hasUnpressedButtons = true;
+            }
+
+            // Kill player(s)
+            if ((top == 4 &&
+                HURTING_TILES.includes(bottom)) ||
+                (top == 10 && bottom == 5)) {
 
                 color = COLORS[0];
 
-                this.activeState.setTile(1, x, y, 0);
+                if (top != 10)
+                    this.activeState.setTile(1, x, y, 0);
+                
                 if (bottom == 5) {
 
                     this.activeState.setTile(0, x, y, 0);
@@ -344,12 +370,19 @@ export class Stage {
                 somethingHappened = true;
             }
         });
+
+        // Toggle buttons
+        if (this.activeState.getToggleableWallState() != hasUnpressedButtons) {
+
+            this.toggleBlocks();
+            this.activeState.setToggleableWallState(hasUnpressedButtons);
+        }
         return somethingHappened;
     }
 
 
     private pushState() : void {
-
+        
         this.states.push(this.oldState.clone());
         if (this.states.length >= STATE_BUFFER_MAX) {
 
@@ -383,7 +416,7 @@ export class Stage {
 
                 this.falling = true;
             }
-            else if (this.oldState != null) {
+            else {
 
                 this.pushState();
             }
@@ -406,6 +439,10 @@ export class Stage {
 
 
     private restart() : void {
+
+        // There is a bug that requires this...
+        if (!this.moving)
+            this.oldState = this.activeState.clone();
 
         this.pushState();
         this.activeState = new PuzzleState(
@@ -560,13 +597,16 @@ export class Stage {
             // Button
             case 11:
 
-                canvas.drawBitmapRegion(bmp, 48, 24, 16, 8, dx, dy+8);
+                if (this.activeState.getTile(1, x, y) == 0)
+                    canvas.drawBitmapRegion(bmp, 48, 24, 16, 8, dx, dy+8);
+
+                canvas.drawBitmapRegion(bmp, 48, 40, 16, 8, dx, dy+8);
                 break;
 
-            // Toggleable buttons
+            // Toggleable blocks
             case 12:
             case 13:
-
+                    
                 canvas.drawBitmapRegion(bmp, 96, 16 - (v-12)*16, 16, 16, dx, dy);
                 break;
 
