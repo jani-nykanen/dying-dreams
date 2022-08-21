@@ -12,7 +12,7 @@ import { RGBA } from "./vector.js";
 const SOLID_TILES = [1, 3, 8, 9, 13];
 const DYNAMIC_TILES = [4, 10];
 const STATE_BUFFER_MAX = 64;
-const CLEAR_WAIT_TIME = 180;
+const CLEAR_WAIT_TIME = 120;
 
 
 export class Stage {
@@ -391,7 +391,7 @@ export class Stage {
 
         if (this.cleared) {
 
-            this.clearTimer = 0;
+            this.clearTimer = CLEAR_WAIT_TIME;
         }
 
         return somethingHappened;
@@ -636,8 +636,35 @@ export class Stage {
 
     private drawStageClearText(canvas : Canvas, bmpFont : Bitmap) : void {
 
-        canvas.drawText(bmpFont, "STAGE", canvas.width/2, canvas.height/2-32, -16, 0, TextAlign.Center)
-              .drawText(bmpFont, "CLEAR", canvas.width/2, canvas.height/2, -16, 0, TextAlign.Center);
+        const WAIT_TIME = 60;
+        const OFFSET = -14;
+
+        const MESSAGES = ["STAGE", "CLEAR"];
+
+        let px = canvas.width/2 - (32 + OFFSET) * 6 / 2.0;
+        let t = Math.min(1.0, (1.0 - (this.clearTimer - WAIT_TIME) / (CLEAR_WAIT_TIME - WAIT_TIME))) * 5;
+
+        let dx : number;
+        let dy : number;
+
+        let end = Math.floor(t);
+
+        for (let j = 0; j < Math.min(5, end + 1); ++ j) {
+            
+            dx = px + j * (32 + OFFSET);
+
+            dy = 0;
+            if (j == end) {
+
+                dy = canvas.height/2 * (1.0 - (t % 1.0));
+            }
+
+            for (let i = 1; i >= 0; -- i) {
+
+                canvas.drawText(bmpFont, MESSAGES[0].charAt(j), dx + i, canvas.height/2-24 - dy + i)
+                    .drawText(bmpFont, MESSAGES[1].charAt(j), dx + i, canvas.height/2-2 + dy + i);
+            }
+        }
     }
 
 
@@ -661,7 +688,7 @@ export class Stage {
         }
         else {
 
-            if ((this.clearTimer += event.step) >= CLEAR_WAIT_TIME) {
+            if ((this.clearTimer -= event.step) <= 0) {
 
                 return true;
             }
