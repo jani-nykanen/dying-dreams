@@ -1,9 +1,7 @@
-import { createBackgroundBitmap } from "./background.js";
-import { generateFont, generateRGB222LookupTable, loadBitmapRGB222 } from "./bitmapgen.js";
-import { Bitmap, Canvas, TextAlign } from "./canvas.js";
+import { Assets } from "./assets.js";
+import { Canvas } from "./canvas.js";
 import { CoreEvent } from "./core.js";
 import { LEVEL_DATA } from "./leveldata.js";
-import { PALETTE1 } from "./palettedata.js";
 import { Stage } from "./stage.js";
 
 
@@ -11,36 +9,26 @@ export class Game {
 
 
     private stage : Stage;
-
-    private bmpBase : Bitmap;
-    private bmpBackground : Bitmap;
-    private bmpFontSmall : Bitmap | null = null;
-
-    private loaded = false;
+    private stageIndex = 1;
+    
+    private assets : Assets;
 
     private backgroundTimer : number = 0.0;
 
 
     constructor(event : CoreEvent) {
 
-        let lookup = generateRGB222LookupTable();
+        this.assets = new Assets(event);
 
-        this.loaded = false;
-
-        this.bmpBase = loadBitmapRGB222("b.png", lookup, PALETTE1, () => {
-
-            this.loaded = true;
-        });
-        this.bmpBackground = createBackgroundBitmap(160, 160, 8);
-        this.bmpFontSmall = generateFont("12px Arial", 24, 24, 2, 8, 127);
-
-        this.stage = new Stage(LEVEL_DATA[0]);
+        this.stage = new Stage(LEVEL_DATA[this.stageIndex-1]);
     }
 
 
     private drawBackground(canvas : Canvas) : void {
 
-        let bmp = this.bmpBackground;
+        let bmp = this.assets.getBitmap("background");
+        if (bmp == undefined)
+            return;
 
         let offy = 4; // Math.abs(canvas.height - bmp.height) / 2;
 
@@ -61,24 +49,27 @@ export class Game {
 
         const BACKGROUND_SPEED = 0.025;
 
-        if (!this.loaded) return;
+        if (!this.assets.hasLoaded()) return;
 
-        this.stage.update(event);
+        if (this.stage.update(event)) {
 
+            this.stage.nextStage(LEVEL_DATA[this.stageIndex ++]);
+        }
+        
         this.backgroundTimer = (this.backgroundTimer + BACKGROUND_SPEED*event.step) % (Math.PI*2);
     }
 
 
     public redraw(canvas : Canvas) : void {
 
-        if (!this.loaded) {
+        if (!this.assets.hasLoaded()) {
 
             canvas.clear(0);
             return;
         }
 
         this.drawBackground(canvas);
-        this.stage.draw(canvas, this.bmpBase);
+        this.stage.draw(canvas, this.assets);
 
         // canvas.drawText(this.bmpFontSmall, "Alpha 0.0.1",  -6, -4, -17, 0, TextAlign.Left);;
     }

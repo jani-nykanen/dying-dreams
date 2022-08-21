@@ -1,5 +1,6 @@
 import { animate } from "./animator.js";
-import { Bitmap, Canvas, Flip } from "./canvas.js";
+import { Assets } from "./assets.js";
+import { Bitmap, Canvas, Flip, TextAlign } from "./canvas.js";
 import { CoreEvent } from "./core.js";
 import { KeyState } from "./keyboard.js";
 import { nextParticle, RubbleParticle, StarParticle } from "./particle.js";
@@ -11,6 +12,7 @@ import { RGBA } from "./vector.js";
 const SOLID_TILES = [1, 3, 8, 9, 13];
 const DYNAMIC_TILES = [4, 10];
 const STATE_BUFFER_MAX = 64;
+const CLEAR_WAIT_TIME = 180;
 
 
 export class Stage {
@@ -32,6 +34,9 @@ export class Stage {
 
     private stars : Array<StarParticle>;
     private rubble : Array<RubbleParticle>;
+
+    private cleared : boolean = false;
+    private clearTimer = 0.0;
 
     public readonly width = 10;
     public readonly height = 9;
@@ -333,6 +338,8 @@ export class Stage {
 
         let color : RGBA;
 
+        this.cleared = true;
+
         this.activeState.iterate(0, (x : number, y : number, v : number) => {
 
             bottom = this.activeState.getTile(0, x, y);
@@ -344,7 +351,7 @@ export class Stage {
                 hasUnpressedButtons = true;
             }
 
-            // Kill player(s)
+            // Kill players and/or boulders
             if ((top == 4 &&
                 HURTING_TILES.includes(bottom)) ||
                 (top == 10 && bottom == 5)) {
@@ -369,6 +376,10 @@ export class Stage {
 
                 somethingHappened = true;
             }
+            else if (top == 4) {
+
+                this.cleared = false;
+            }
         });
 
         // Toggle buttons
@@ -377,6 +388,12 @@ export class Stage {
             this.toggleBlocks();
             this.activeState.setToggleableWallState(hasUnpressedButtons);
         }
+
+        if (this.cleared) {
+
+            this.clearTimer = 0;
+        }
+
         return somethingHappened;
     }
 
@@ -617,20 +634,37 @@ export class Stage {
     }
 
 
-    public update(event : CoreEvent) : void {
+    private drawStageClearText(canvas : Canvas, bmpFont : Bitmap) : void {
+
+        canvas.drawText(bmpFont, "STAGE", canvas.width/2, canvas.height/2-32, -16, 0, TextAlign.Center)
+              .drawText(bmpFont, "CLEAR", canvas.width/2, canvas.height/2, -16, 0, TextAlign.Center);
+    }
+
+
+    public update(event : CoreEvent) : boolean {
 
         const STATIC_ANIMATION_SPEED = 0.025;
-
+        
         this.move(event);
-        this.control(event);
+        if (!this.cleared) {
 
-        if (event.keyboard.getActionState("undo") == KeyState.Pressed) {
+            this.control(event);
 
-            this.undo();
+            if (event.keyboard.getActionState("undo") == KeyState.Pressed) {
+
+                this.undo();
+            }
+            else if (event.keyboard.getActionState("restart") == KeyState.Pressed) {
+
+                this.restart();
+            }
         }
-        else if (event.keyboard.getActionState("restart") == KeyState.Pressed) {
+        else {
 
-            this.restart();
+            if ((this.clearTimer += event.step) >= CLEAR_WAIT_TIME) {
+
+                return true;
+            }
         }
 
         this.staticAnimationTimer = (this.staticAnimationTimer + STATIC_ANIMATION_SPEED*event.step) % 1.0;
@@ -643,11 +677,18 @@ export class Stage {
 
             s.update(event);
         }
+
+        return false;
     }
 
 
-    public draw(canvas : Canvas, bmpBase : Bitmap) : void {
+    public draw(canvas : Canvas, assets : Assets) : void {
     
+        let bmpBase = assets.getBitmap("base");
+        let bmpFontBig = assets.getBitmap("fontBig");
+        if (bmpBase == null || bmpFontBig == null)
+            return;
+
         this.drawNonTerrainStaticTiles(canvas, bmpBase);
         this.drawTerrain(canvas, bmpBase);
 
@@ -662,5 +703,28 @@ export class Stage {
 
             s.draw(canvas);
         }
+
+        if (this.cleared) {
+
+            canvas.setFillColor(0, 0, 0, 0.33)
+                  .fillRect();
+            this.drawStageClearText(canvas, bmpFontBig);
+        }
+    }
+
+
+    public nextStage(newMapdata : Array<number>) : void {
+
+        this.baseTilemap = Array.from(newMapdata);
+
+        this.states.length = 0;
+        this.activeState = new PuzzleState(
+            this.baseTilemap,
+            this.baseTilemap.map(v => Number(DYNAMIC_TILES.includes(v)) * v),
+            this.width, this.height, Flip.None);
+        this.oldState = this.activeState.clone();
+
+        this.moveData.fill(Direction.None);
+        this.terrainMap = createTerrainMap(this.baseTilemap, this.width, this.height);
     }
 }
