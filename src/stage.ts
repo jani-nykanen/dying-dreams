@@ -13,6 +13,7 @@ const SOLID_TILES = [1, 3, 8, 9, 13];
 const DYNAMIC_TILES = [4, 10];
 const STATE_BUFFER_MAX = 64;
 const CLEAR_WAIT_TIME = 120;
+const START_TIME = 30;
 
 
 export class Stage {
@@ -35,6 +36,9 @@ export class Stage {
     private stars : Array<StarParticle>;
     private rubble : Array<RubbleParticle>;
 
+    private stageIndex : number;
+    private startTimer : number = START_TIME;
+
     private cleared : boolean = false;
     private clearTimer = 0.0;
 
@@ -42,7 +46,7 @@ export class Stage {
     public readonly height = 9;
 
 
-    constructor(initialMap : Array<number>) {
+    constructor(initialMap : Array<number>, index : number) {
 
         this.baseTilemap = Array.from(initialMap);
 
@@ -56,6 +60,8 @@ export class Stage {
         this.moveData = (new Array<Direction> (this.width*this.height)).fill(Direction.None);
 
         this.terrainMap = createTerrainMap(this.baseTilemap, this.width, this.height);
+
+        this.stageIndex = index;
 
         this.stars = new Array<StarParticle> ();
         this.rubble = new Array<RubbleParticle> ();
@@ -126,6 +132,7 @@ export class Stage {
         direction : Direction, fallCheck = false) : boolean {
 
         if (this.moveData[y*this.width + x] != Direction.None ||
+            this.activeState.getTile(0, x, y) == 13 ||
             this.isReserved(x + dx, y + dy) ||
             this.checkLadder(x, y, direction, fallCheck) == fallCheck) {
 
@@ -670,22 +677,42 @@ export class Stage {
     }
 
 
+    private drawStageStart(canvas : Canvas, bmpFont : Bitmap) : void {
+
+        canvas.setFillColor(0, 0, 0, 0.33)
+              .fillRect();
+
+        for (let i = 1; i >= 0; -- i) {
+
+            canvas.drawText(bmpFont, "STAGE " + Number(this.stageIndex | 0), 
+                canvas.width/2 + i, canvas.height/2-16 + i, -14, 0, TextAlign.Center);
+        }
+    }
+
+
     public update(event : CoreEvent, control = true) : boolean {
 
         const STATIC_ANIMATION_SPEED = 0.025;
         
         this.move(event);
-        if (!this.cleared) {
+        if (!this.cleared && control) {
 
-            this.control(event);
+            if (this.startTimer > 0) {
 
-            if (event.keyboard.getActionState("undo") == KeyState.Pressed) {
-
-                this.undo();
+                this.startTimer -= event.step;
             }
-            else if (event.keyboard.getActionState("restart") == KeyState.Pressed) {
+            else {
 
-                this.restart();
+                this.control(event);
+
+                if (event.keyboard.getActionState("undo") == KeyState.Pressed) {
+
+                    this.undo();
+                }
+                else if (event.keyboard.getActionState("restart") == KeyState.Pressed) {
+
+                    this.restart();
+                }
             }
         }
         else if (control) {
@@ -739,6 +766,12 @@ export class Stage {
                   .fillRect();
             this.drawStageClearText(canvas, bmpFontBig);
         }
+        
+        
+        if (this.startTimer > 0) {
+
+            this.drawStageStart(canvas, bmpFontBig);
+        }
     }
 
 
@@ -758,5 +791,9 @@ export class Stage {
 
         this.cleared = false;
         this.clearTimer = 0;
+
+        this.startTimer = START_TIME;
+
+        ++ this.stageIndex;
     }
 }

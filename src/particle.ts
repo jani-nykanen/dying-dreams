@@ -182,8 +182,11 @@ export const nextParticle = (arr : Array<Particle>, type : Function) : Particle 
     let p : Particle | null = null;
     for (let a of arr) {
 
-        if (!a.doesExist())
+        if (!a.doesExist()) {
+
             p = a;
+            break;
+        }
     }
 
     if (p == null) {

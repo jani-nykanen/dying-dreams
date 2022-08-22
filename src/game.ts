@@ -23,7 +23,7 @@ export class Game {
         this.assets = new Assets(event);
         this.transition = new Transition();
 
-        this.stage = new Stage(LEVEL_DATA[this.stageIndex-1]);
+        this.stage = new Stage(LEVEL_DATA[this.stageIndex-1], this.stageIndex);
     }
 
 

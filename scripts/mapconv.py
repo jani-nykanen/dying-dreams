@@ -10,7 +10,6 @@ import os
 
 
 files = sorted(glob.glob(TILEMAP_PATH + "/*.tmx"))
-print(files)
 
 def parse_tilemap(path):
     for d in ET.parse(path).getroot().iter("data"):
