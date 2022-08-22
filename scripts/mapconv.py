@@ -6,9 +6,11 @@ OUTPUT_PATH = "src/leveldata.ts"
 
 import glob
 import xml.etree.ElementTree as ET
+import os
 
 
-files = glob.glob(TILEMAP_PATH + "/*.tmx")
+files = sorted(glob.glob(TILEMAP_PATH + "/*.tmx"))
+print(files)
 
 def parse_tilemap(path):
     for d in ET.parse(path).getroot().iter("data"):

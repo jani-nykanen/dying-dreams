@@ -3,6 +3,7 @@ import { Canvas } from "./canvas.js";
 import { CoreEvent } from "./core.js";
 import { LEVEL_DATA } from "./leveldata.js";
 import { Stage } from "./stage.js";
+import { Transition, TransitionType } from "./transition.js";
 
 
 export class Game {
@@ -12,6 +13,7 @@ export class Game {
     private stageIndex = 1;
     
     private assets : Assets;
+    private transition : Transition;
 
     private backgroundTimer : number = 0.0;
 
@@ -19,6 +21,7 @@ export class Game {
     constructor(event : CoreEvent) {
 
         this.assets = new Assets(event);
+        this.transition = new Transition();
 
         this.stage = new Stage(LEVEL_DATA[this.stageIndex-1]);
     }
@@ -51,12 +54,18 @@ export class Game {
 
         if (!this.assets.hasLoaded()) return;
 
-        if (this.stage.update(event)) {
+        if (this.stage.update(event, !this.transition.isActive())) {
 
-            this.stage.nextStage(LEVEL_DATA[this.stageIndex ++]);
+            this.transition.activate(true, TransitionType.Circle, 1.0/30.0,
+            () => {
+
+                this.stage.nextStage(LEVEL_DATA[this.stageIndex ++]);
+            });
         }
         
         this.backgroundTimer = (this.backgroundTimer + BACKGROUND_SPEED*event.step) % (Math.PI*2);
+
+        this.transition.update(event);
     }
 
 
@@ -71,7 +80,7 @@ export class Game {
         this.drawBackground(canvas);
         this.stage.draw(canvas, this.assets);
 
-        // canvas.drawText(this.bmpFontSmall, "Alpha 0.0.1",  -6, -4, -17, 0, TextAlign.Left);;
+        this.transition.draw(canvas);
     }
 
 }

@@ -668,7 +668,7 @@ export class Stage {
     }
 
 
-    public update(event : CoreEvent) : boolean {
+    public update(event : CoreEvent, control = true) : boolean {
 
         const STATIC_ANIMATION_SPEED = 0.025;
         
@@ -686,7 +686,7 @@ export class Stage {
                 this.restart();
             }
         }
-        else {
+        else if (control) {
 
             if ((this.clearTimer -= event.step) <= 0) {
 
@@ -753,5 +753,8 @@ export class Stage {
 
         this.moveData.fill(Direction.None);
         this.terrainMap = createTerrainMap(this.baseTilemap, this.width, this.height);
+
+        this.cleared = false;
+        this.clearTimer = 0;
     }
 }

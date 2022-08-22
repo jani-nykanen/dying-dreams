@@ -300,6 +300,42 @@ export class Canvas {
     }
 
 
+    public fillCircleOutside(r : number, cx = this.width/2, cy = this.height/2) : Canvas {
+
+        let start = Math.max(0, cy - r) | 0;
+        let end = Math.min(this.height, cy + r) | 0;
+
+        if (start > 0)
+            this.fillRect(0, 0, this.width, start);
+        if (end < this.height)
+            this.fillRect(0, end, this.width, this.height - end);
+
+        let dy : number;
+        let px1 : number;
+        let px2 : number;
+        
+        for (let y = start; y < end; ++ y) {
+
+            dy = y - cy;
+
+            if (Math.abs(dy) >= r) {
+
+                this.fillRect(0, y, this.width, 1);
+                continue;
+            }
+
+            px1 = Math.round(cx - Math.sqrt(r*r - dy*dy));
+            px2 = Math.round(cx + Math.sqrt(r*r - dy*dy));
+            if (px1 > 0)
+                this.fillRect(0, y, px1, 1);
+            if (px2 < this.width)
+                this.fillRect(px2, y, this.width - px1, 1);
+        }
+
+        return this;
+    }
+
+
     public fillRegularStar(cx : number, cy : number, radius : number) : Canvas {
 
         let leftx = Math.round(Math.sin(-Math.PI*2/3) * radius);
