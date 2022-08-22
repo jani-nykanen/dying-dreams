@@ -186,6 +186,8 @@ export class Stage {
                     break;
                 }
             }
+            if (!move)
+                return false;
         }
 
         this.activeState.setTile(1, x, y, 0);
