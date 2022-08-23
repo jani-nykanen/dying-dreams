@@ -178,16 +178,20 @@ export class Stage {
         }
 
         let move = fallCheck;
+        let near : number;
 
         if (!move) {
 
             // Check if a player in the correct direction
             for (let ty = y; ty < this.height; ++ ty) {
 
-                if (this.oldState.getTile(1, x, ty) != 10)
+                near = this.oldState.getTile(1, x - dx, ty);
+
+                if (this.oldState.getTile(1, x, ty) != 10 ||
+                    (near != 4 && SOLID_TILES.includes(this.oldState.getTile(0, x + dx, ty))))
                     return false;
 
-                if (this.oldState.getTile(1, x - dx, ty) == 4) {
+                if (near == 4) {
 
                     move = true;
                     break;
