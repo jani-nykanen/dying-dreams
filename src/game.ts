@@ -10,7 +10,7 @@ export class Game {
 
 
     private stage : Stage;
-    private stageIndex = 13;
+    private stageIndex = 1;
     
     private assets : Assets;
     private transition : Transition;
@@ -54,7 +54,7 @@ export class Game {
 
         if (!this.assets.hasLoaded()) return;
 
-        if (this.stage.update(event, !this.transition.isActive())) {
+        if (this.stage.update(event, this.assets, !this.transition.isActive())) {
 
             this.transition.activate(true, TransitionType.Circle, 1.0/30.0,
             () => {

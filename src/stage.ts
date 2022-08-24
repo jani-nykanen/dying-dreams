@@ -5,6 +5,7 @@ import { CoreEvent } from "./core.js";
 import { KeyState } from "./keyboard.js";
 import { nextParticle, RubbleParticle, StarParticle } from "./particle.js";
 import { Direction, PuzzleState } from "./puzzlestate.js";
+import { Sample } from "./sample.js";
 import { COLUMN_COUNT, createTerrainMap } from "./terrainmap.js";
 import { RGBA } from "./vector.js";
 
@@ -333,7 +334,7 @@ export class Stage {
     }
 
 
-    private checkStaticTileEvents(event : CoreEvent) : boolean {
+    private checkStaticTileEvents(assets : Assets, event : CoreEvent) : boolean {
 
         const HURTING_TILES = [5, 6, 7];
         
@@ -387,6 +388,8 @@ export class Stage {
 
                 this.spawnStarParticles(x*16 + 8, y*16 + 8, 4, Math.PI/4, color);
 
+                event.audio.playSample(assets.getSample("die") as Sample, 0.60);
+
                 somethingHappened = true;
             }
             else if (top == 4) {
@@ -421,7 +424,7 @@ export class Stage {
     }
 
 
-    private move(event : CoreEvent) : void {
+    private move(assets : Assets, event : CoreEvent) : void {
 
         const MOVE_SPEED_BASE = 1.0/16.0;
         const MOVE_SPEED_FALL = 1.0/8.0;
@@ -437,7 +440,7 @@ export class Stage {
             this.moving = false;
             this.moveData.fill(Direction.None);
 
-            this.checkStaticTileEvents(event);
+            this.checkStaticTileEvents(assets, event);
 
             if (this.handleAction(Direction.Down, event, true)) {
                 
@@ -694,11 +697,11 @@ export class Stage {
     }
 
 
-    public update(event : CoreEvent, control = true) : boolean {
+    public update(event : CoreEvent, assets : Assets, control = true) : boolean {
 
         const STATIC_ANIMATION_SPEED = 0.025;
         
-        this.move(event);
+        this.move(assets, event);
         if (!this.cleared && control) {
 
             if (this.startTimer > 0) {
