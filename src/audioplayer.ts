@@ -10,6 +10,8 @@ export class AudioPlayer {
     private globalVolume : number;
     private enabled : boolean;
 
+    private errorLogged = false;
+
 
     constructor(globalVolume = 1.0) {
 
@@ -32,7 +34,28 @@ export class AudioPlayer {
         if (s == undefined)
             return;
 
-        s.play(volume * this.globalVolume);
+        try {
+
+            s.play(volume * this.globalVolume);
+        }
+        catch (e) {
+
+            if (!this.errorLogged) {
+
+                console.log("Audio error: " + e);
+                this.errorLogged = true;
+            }
+
+            // Nested try ugh...
+            try {
+
+                s.play(volume * this.globalVolume, true);
+            }
+            catch (e) {
+
+                console.log("Audio error: " + e);
+            }
+        }
     }
 
 

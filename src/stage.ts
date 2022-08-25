@@ -34,6 +34,7 @@ export class Stage {
     private climbing = false;
     private rubbleSpawned = false;
     private boulderMoved = false;
+    private boulderFalling = false;
 
     private staticAnimationTimer = 0.0;
 
@@ -259,6 +260,10 @@ export class Stage {
                         changed = true;
 
                         this.boulderMoved = true;
+                        if (fallCheck) {
+
+                            this.boulderFalling = true;
+                        }
                     }
                     break;
 
@@ -475,14 +480,15 @@ export class Stage {
         }
 
         if (this.moveTimer >= 1.0) {
-
+            
             this.moveTimer = 0;
             this.moving = false;
             this.climbing = false;
+            this.falling = false;
             this.moveData.fill(Direction.None);
 
             this.checkStaticTileEvents(assets, event);
-
+            
             if (this.handleAction(Direction.Down, event, true)) {
                 
                 this.moving = true;
@@ -492,6 +498,11 @@ export class Stage {
             }
             else {
 
+                if (!this.falling && this.boulderFalling) {
+
+                    event.audio.playSample(assets.getSample("boulder"), 1.20);
+                    this.boulderFalling = false;
+                }
                 this.pushState();
             }
         }

@@ -21,6 +21,7 @@ export class Sample {
     private type : OscillatorType;
     private ramp : Ramp;
     private fadeVolumeFactor : number;
+    private started = false;
 
 
     constructor(ctx : AudioContext, sequence : number[][], 
@@ -40,7 +41,7 @@ export class Sample {
 
     public stop() : void {
 
-        if (this.oscillator == null) return;
+        if (this.oscillator === null) return;
 
         this.oscillator.stop(0);
         this.oscillator.disconnect();
@@ -48,9 +49,13 @@ export class Sample {
     }
 
 
-    public play(volume : number) : void {
+    public play(volume : number, isPossiblyFirefox = false) : void {
 
-        this.stop();
+        // Firefox throws error here...
+        try {
+            this.stop();
+        }
+        catch (e) {}
 
         let time = this.ctx.currentTime;
         let timer = 0.0;
@@ -58,11 +63,21 @@ export class Sample {
         this.oscillator = this.ctx.createOscillator();
         this.oscillator.type = this.type;
 
+        this.started = true;
+
         volume *= this.baseVolume;
+
+        if (!isPossiblyFirefox) {
+
+            this.gain.gain.cancelAndHoldAtTime(time);
+        }
+        else {
+
+            this.gain.gain.setValueAtTime(this.gain.gain.minValue, time);
+        }
 
         this.oscillator.frequency.setValueAtTime(this.baseSequence[0][0], time);
         this.gain.gain.setValueAtTime(clamp(volume, 0.01, 1.0), time);
-        this.gain.gain.cancelAndHoldAtTime(time);
 
         timer = 0;
         for (let s of this.baseSequence ) {
