@@ -31,6 +31,9 @@ export class Stage {
     private moveTimer = 0.0;
     private moving = false;
     private falling = false;
+    private climbing = false;
+    private rubbleSpawned = false;
+    private boulderMoved = false;
 
     private staticAnimationTimer = 0.0;
 
@@ -126,6 +129,7 @@ export class Stage {
                         dy*2 + dx);
             }
         }
+        this.rubbleSpawned = true;
     }
 
 
@@ -253,6 +257,8 @@ export class Stage {
 
                         moved = true;
                         changed = true;
+
+                        this.boulderMoved = true;
                     }
                     break;
 
@@ -268,7 +274,7 @@ export class Stage {
     }
 
 
-    private control(event : CoreEvent) : void {
+    private control(assets : Assets, event : CoreEvent) : void {
 
         if (this.moving)
             return;
@@ -292,11 +298,29 @@ export class Stage {
             dir = Direction.Down;
         }
 
+        this.rubbleSpawned = false;
+        this.boulderMoved = false;
+
         if (this.handleAction(dir, event)) {
 
             this.moving = true;
             this.moveTimer = 0.0;
             this.falling = false;
+
+            if (dir == Direction.Up || dir == Direction.Down) {
+
+                this.climbing = true;
+            }
+
+            if (this.rubbleSpawned) {
+
+                event.audio.playSample(assets.getSample("rumble"), 0.60);
+            }
+
+            if (this.boulderMoved) {
+
+                event.audio.playSample(assets.getSample("boulder"), 1.20);
+            }
         }
     }
 
@@ -346,6 +370,7 @@ export class Stage {
 
         let somethingHappened = false;
         let hasUnpressedButtons = false;
+        let hasButtons = false;
 
         let bottom : number;
         let top : number;
@@ -358,11 +383,14 @@ export class Stage {
 
             bottom = this.activeState.getTile(0, x, y);
             top = this.activeState.getTile(1, x, y);
-
+            
             // Check buttons
-            if (bottom == 11 && top == 0 && !hasUnpressedButtons) {
+            if (bottom == 11) {
 
-                hasUnpressedButtons = true;
+                hasButtons = true;
+
+                if (top == 0 && !hasUnpressedButtons)
+                    hasUnpressedButtons = true;
             }
 
             // Kill players and/or boulders
@@ -388,7 +416,7 @@ export class Stage {
 
                 this.spawnStarParticles(x*16 + 8, y*16 + 8, 4, Math.PI/4, color);
 
-                event.audio.playSample(assets.getSample("die") as Sample, 0.60);
+                event.audio.playSample(assets.getSample("die"), 0.60);
 
                 somethingHappened = true;
             }
@@ -399,10 +427,13 @@ export class Stage {
         });
 
         // Toggle buttons
-        if (this.activeState.getToggleableWallState() != hasUnpressedButtons) {
+        if (hasButtons &&
+            this.activeState.getToggleableWallState() != hasUnpressedButtons) {
 
             this.toggleBlocks();
             this.activeState.setToggleableWallState(hasUnpressedButtons);
+
+            event.audio.playSample(assets.getSample("toggle" + (hasUnpressedButtons ? "2" : "1")), 0.60);
         }
 
         if (this.cleared) {
@@ -434,10 +465,20 @@ export class Stage {
 
         let moveSpeed = this.falling ? MOVE_SPEED_FALL : MOVE_SPEED_BASE;
 
-        if ((this.moveTimer += moveSpeed * event.step) >= 1.0) {
+        let oldMoveTime = this.moveTimer;
+        this.moveTimer += moveSpeed * event.step;
+
+        if (this.climbing && 
+            oldMoveTime <= 0.5 && this.moveTimer > 0.5) {
+            
+            event.audio.playSample(assets.getSample("climb"), 0.60);
+        }
+
+        if (this.moveTimer >= 1.0) {
 
             this.moveTimer = 0;
             this.moving = false;
+            this.climbing = false;
             this.moveData.fill(Direction.None);
 
             this.checkStaticTileEvents(assets, event);
@@ -630,8 +671,11 @@ export class Stage {
             // Button
             case 11:
 
-                if (this.activeState.getTile(1, x, y) == 0)
+                if (this.activeState.getTile(1, x, y) == 0 || 
+                    (this.moving && this.moveTimer < 0.5)) {
+
                     canvas.drawBitmapRegion(bmp, 48, 24, 16, 8, dx, dy+8);
+                }
 
                 canvas.drawBitmapRegion(bmp, 48, 40, 16, 8, dx, dy+8);
                 break;
@@ -710,7 +754,7 @@ export class Stage {
             }
             else {
 
-                this.control(event);
+                this.control(assets, event);
 
                 if (event.keyboard.getActionState("undo") == KeyState.Pressed) {
 

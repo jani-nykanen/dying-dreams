@@ -27,7 +27,10 @@ export class AudioPlayer {
         fadeVolumeFactor : number = 0.5) : Sample => (new Sample(this.ctx, sequence, baseVolume, type, ramp, fadeVolumeFactor));
 
 
-    public playSample(s : Sample, volume = 1.0) : void {
+    public playSample(s : Sample | undefined, volume = 1.0) : void {
+
+        if (s == undefined)
+            return;
 
         s.play(volume * this.globalVolume);
     }

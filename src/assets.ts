@@ -44,9 +44,31 @@ export class Assets {
 
         this.samples.set("die",
             event.audio.createSample(
-                [[224, 4], [192, 6], [176, 8], [128, 10]],
-                0.80, "square", Ramp.Exponential, 0.20
+                [[192, 4], [144, 8], [128, 12]],
+                0.70, "square", Ramp.Exponential, 0.20
             ));
+        this.samples.set("climb",
+            event.audio.createSample(
+                [[160, 4]],
+                0.70, "square", Ramp.Instant));
+        this.samples.set("toggle1",
+            event.audio.createSample(
+                [[160, 4], [192, 12]],
+                0.70, "square", Ramp.Instant, 0.35));
+        this.samples.set("toggle2",
+            event.audio.createSample(
+                [[192, 4], [160, 12]],
+                0.70, "square", Ramp.Instant, 0.35));       
+        this.samples.set("rumble",
+            event.audio.createSample(
+                [[224, 4], [160, 4], [192, 4], [160, 4],  [128, 12]],
+                0.80, "sawtooth", Ramp.Linear, 0.20
+            ));  
+        this.samples.set("boulder",
+            event.audio.createSample(
+                [[144, 8]],
+                1.0, "triangle", Ramp.Exponential, 0.20
+            ));    
     }
 
 
