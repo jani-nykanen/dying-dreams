@@ -1,3 +1,4 @@
+import { Assets } from "./assets.js";
 import { clamp } from "./math.js";
 
 
@@ -70,6 +71,8 @@ export class Canvas {
     private canvas : HTMLCanvasElement;
     private ctx : CanvasRenderingContext2D;
 
+    public readonly assets : Assets;
+
 
     public get width() {
 
@@ -81,7 +84,7 @@ export class Canvas {
     }
 
 
-    constructor(width : number, height : number, isMainCanvas = true) {
+    constructor(width : number, height : number, isMainCanvas : boolean, assets : Assets) {
 
         [this.canvas, this.ctx] = createCanvasElement(width, height, isMainCanvas);
 
@@ -90,6 +93,7 @@ export class Canvas {
             window.addEventListener("resize", () => this.resizeEvent(window.innerWidth, window.innerHeight));
             this.resizeEvent(window.innerWidth, window.innerHeight);
         }
+        this.assets = assets;
     }   
 
 

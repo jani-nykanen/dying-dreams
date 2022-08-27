@@ -63,7 +63,7 @@ export class Menu {
     }
 
 
-    public update(assets : Assets, event : CoreEvent) : void {
+    public update(event : CoreEvent) : void {
 
         if (!this.active) return;
 
@@ -82,7 +82,7 @@ export class Menu {
 
             this.cursorPos = negMod(this.cursorPos, this.buttons.length);
             
-            event.audio.playSample(assets.getSample("choose"), 0.60);
+            event.audio.playSample(event.assets.getSample("choose"), 0.60);
         }
 
         let activeButton = this.buttons[this.cursorPos];
@@ -93,13 +93,12 @@ export class Menu {
 
             activeButton.evaluateCallback(event);
             
-            event.audio.playSample(assets.getSample("select"), 0.60);
+            event.audio.playSample(event.assets.getSample("select"), 0.60);
         }
     }
 
 
-    public draw(canvas : Canvas, assets : Assets, 
-        x = 0, y = 0, xoff = -15, yoff = 12) {
+    public draw(canvas : Canvas, x = 0, y = 0, xoff = -15, yoff = 12) {
 
         const BOX_OFFSET = 4;
         const MAGIC_XOFF = -4;
@@ -121,7 +120,7 @@ export class Menu {
 
         for (let i = 0; i < this.buttons.length; ++ i) {
 
-            font = assets.getBitmap(i == this.cursorPos ? "fontYellow" : "font")
+            font = canvas.assets.getBitmap(i == this.cursorPos ? "fontYellow" : "font")
 
             canvas.drawText(font, this.buttons[i].getText(),
                 dx + MAGIC_XOFF, 

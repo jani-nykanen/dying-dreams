@@ -1,3 +1,4 @@
+import { Assets } from "./assets.js";
 import { generateFreeStyleBitmap } from "./bitmapgen.js";
 import { Bitmap, Canvas } from "./canvas.js";
 
@@ -44,9 +45,9 @@ const putStart = (canvas : Canvas, x : number, y : number, radius = 1) : void =>
 
 
 
-export const createBackgroundBitmap = (width : number, height : number, yoff = 0) : Bitmap => {
+export const createBackgroundBitmap = (assets : Assets, width : number, height : number, yoff = 0) : Bitmap => {
 
-    return generateFreeStyleBitmap(width, height, (canvas : Canvas) => {
+    return generateFreeStyleBitmap(assets, width, height, (canvas : Canvas) => {
 
         const MOON_XOFF = -32;
         const MOON_YOFF = 32;

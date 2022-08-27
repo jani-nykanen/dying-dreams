@@ -1,13 +1,18 @@
 import { Canvas } from "./canvas.js";
 import { Core, CoreEvent } from "./core.js"
 import { Game } from "./game.js";
+import { TitleScreen } from "./titlescreen.js";
 
 
 window.onload = () => {
 
-    let game : Game;
+    (new Core(160, 144))
+    .addScene("game", new Game())
+    .addScene("titlescreen", new TitleScreen())
+    .run("game", (event : CoreEvent) => {
 
-    (new Core(160, 144)).run((event : CoreEvent) => {
+        // TODO: Construct here!
+        event.assets.construct(event);
 
         event.keyboard
             .addAction("right", "ArrowRight", "KeyD")
@@ -18,12 +23,7 @@ window.onload = () => {
             .addAction("restart", "KeyR")
             .addAction("start", "Enter")
             .addAction("pause", "Enter")
-            .addAction("select", "Space");
-            
+            .addAction("select", "Space");  
         event.audio.setGlobalVolume(0.50);
-
-        game = new Game(event);
-
-    }, (event : CoreEvent) => game.update(event), 
-       (canvas : Canvas) => game.redraw(canvas));
+    });
 }

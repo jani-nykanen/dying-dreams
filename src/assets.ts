@@ -15,13 +15,10 @@ export class Assets {
     private loaded : boolean = false;
 
 
-    constructor(event : CoreEvent) {
+    constructor() {
 
         this.bitmaps = new Map<string, Bitmap> ();
         this.samples = new Map<string, Sample> ();
-
-        this.constructBitmaps();
-        this.constructSamples(event);
     }
 
 
@@ -34,7 +31,7 @@ export class Assets {
             this.loaded = true;
         }));
 
-        this.bitmaps.set("background", createBackgroundBitmap(160, 160, 8));
+        this.bitmaps.set("background", createBackgroundBitmap(this, 160, 160, 8));
         this.bitmaps.set("font", generateFont("12px Arial", 24, 24, 2, 8, 127));
         this.bitmaps.set("fontYellow", generateFont("12px Arial", 24, 24, 2, 8, 127, [255, 255, 0]));
         this.bitmaps.set("fontBig", generateFont("bold 24px Arial", 32, 32, 2, 8, 127, [170, 255, 0], true));
@@ -88,6 +85,15 @@ export class Assets {
             event.audio.createSample(
                 [[128, 4], [144, 6]],
                 0.70, "square", Ramp.Exponential));    
+    }
+
+
+    public construct(event : CoreEvent) : void {
+
+        // TODO: Construct assets "onstart" function in main.ts
+
+        this.constructBitmaps();
+        this.constructSamples(event);
     }
 
 

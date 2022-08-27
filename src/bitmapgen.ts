@@ -1,3 +1,4 @@
+import { Assets } from "./assets.js";
 import { Bitmap, Canvas, getColorString } from "./canvas.js";
 
 
@@ -177,10 +178,12 @@ export const loadBitmapRGB222 = (path : string,
 }
 
 
-export const generateFreeStyleBitmap = (width : number, height : number,
+export const generateFreeStyleBitmap = (
+    assets : Assets,
+    width : number, height : number,
     renderFunc : (canvas : Canvas) => void) : Bitmap => {
 
-    let canvas = new Canvas(width, height, false);
+    let canvas = new Canvas(width, height, false, assets);
 
     renderFunc(canvas);
 

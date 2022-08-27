@@ -1,7 +1,17 @@
+import { Assets } from "./assets.js";
 import { AudioPlayer } from "./audioplayer.js";
 import { Canvas } from "./canvas.js";
 import { Keyboard } from "./keyboard.js";
+import { Transition } from "./transition.js";
 
+
+export interface Scene {
+
+    init(param : any, event : CoreEvent) : void;
+    update(event : CoreEvent) : void;
+    redraw(canvas : Canvas) : void;
+    onChange() : any;
+}
 
 
 export class CoreEvent {
@@ -9,16 +19,24 @@ export class CoreEvent {
 
     public readonly keyboard : Keyboard;
     public readonly audio : AudioPlayer;
+    public readonly transition : Transition;
+    public readonly assets : Assets;
+
     public readonly step = 1.0;
 
     private readonly canvas : Canvas;
+    private readonly core : Core;
 
 
-    constructor(keyboard : Keyboard, audio : AudioPlayer, canvas : Canvas) {
+    constructor(keyboard : Keyboard, audio : AudioPlayer, canvas : Canvas, 
+        transition : Transition, assets : Assets, core : Core) {
 
         this.keyboard = keyboard;
         this.audio = audio;
         this.canvas = canvas;
+        this.transition = transition;
+        this.assets = assets;
+        this.core = core;
     }
 
 
@@ -29,6 +47,12 @@ export class CoreEvent {
     public get screenHeight() : number { 
         
         return this.canvas.height; 
+    }
+
+
+    public changeScene(name : string) : void {
+
+        this.core.changeScene(name);
     }
 }
 
@@ -43,21 +67,31 @@ export class Core {
     private canvas : Canvas;
     private keyboard : Keyboard;
     private audio : AudioPlayer;
+    private assets : Assets;
+    private transition : Transition;
     private event : CoreEvent;
+
+    private scenes : Map<string, Scene>;
+    private activeScene : Scene | undefined = undefined;
 
     private timeSum = 0.0;
     private oldTime = 0.0;
 
-    private updateCallback : UpdateCallbackFunction = (_ : CoreEvent) : void => {};
-    private redrawCallback : RedrawCallbackFunction = (_ : Canvas)    : void => {};
-
 
     constructor(canvasWidth : number, canvasHeight : number) {
 
-        this.canvas = new Canvas(canvasWidth, canvasHeight);
+        this.assets = new Assets();
+        this.canvas = new Canvas(canvasWidth, canvasHeight, true, this.assets);
         this.keyboard = new Keyboard();
         this.audio = new AudioPlayer();
-        this.event = new CoreEvent(this.keyboard, this.audio, this.canvas);
+        this.transition = new Transition();
+
+        this.event = new CoreEvent(
+            this.keyboard, this.audio, 
+            this.canvas, this.transition, 
+            this.assets, this);
+
+        this.scenes = new Map<string, Scene> ();
     }
 
 
@@ -73,25 +107,64 @@ export class Core {
         let refreshCount = (this.timeSum / FRAME_WAIT) | 0;
         while ((refreshCount --) > 0) {
 
-            this.updateCallback(this.event);
+            if (this.activeScene != undefined &&
+                this.assets.hasLoaded()) {
+
+                this.activeScene.update(this.event);
+            }
+
             this.keyboard.update();
+            this.transition.update(this.event);
 
             this.timeSum -= FRAME_WAIT;
         }
 
-        this.redrawCallback(this.canvas);
+        if (!this.assets.hasLoaded()) {
+
+            this.canvas.clear(0);
+        }
+        else {
+
+            if (this.activeScene != undefined)
+                this.activeScene.redraw(this.canvas);
+
+            this.transition.draw(this.canvas);
+        }
+
         window.requestAnimationFrame(ts => this.loop(ts));
     }
 
 
-    public run(onstart : ((event : CoreEvent) => void) = () => {},
-        updateCb : UpdateCallbackFunction = () => {},
-        redrawCb : RedrawCallbackFunction = () => {}) : void {
+    public run(initialScene : string, 
+        onstart : ((event : CoreEvent) => void) = () => {}) : void {
 
-        this.updateCallback = updateCb;
-        this.redrawCallback = redrawCb;
+        this.activeScene = this.scenes.get(initialScene);
+        if (this.activeScene != undefined) {
+
+            this.activeScene.init(null, this.event);
+        }
 
         onstart(this.event);
         this.loop(0);
+    }
+
+
+    public addScene(name : string,  scene : Scene) : Core {
+
+        this.scenes.set(name, scene);
+        return this;
+    }
+
+
+    public changeScene(name : string) : void {
+
+        let newScene = this.scenes.get(name);
+        if (newScene == undefined) {
+
+            throw "No scene with name: " + name;
+        }
+
+        newScene.init(this.activeScene?.onChange(), this.event);
+        this.activeScene = newScene;
     }
 }

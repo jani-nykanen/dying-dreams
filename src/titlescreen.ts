@@ -1,22 +1,21 @@
-import { Assets } from "./assets.js";
 import { Canvas } from "./canvas.js";
-import { CoreEvent } from "./core.js";
+import { CoreEvent, Scene } from "./core.js";
 import { Menu, MenuButton } from "./menu.js";
 
 
-export class TitleScreen {
+export class TitleScreen implements Scene {
 
 
     private startMenu : Menu
 
 
-    constructor(event : CoreEvent) {
+    constructor() {
 
         this.startMenu = new Menu(
             [
                 new MenuButton("New Game", () => {}),
                 new MenuButton("Continue", () => {}),
-                new MenuButton(event.audio.getStateString(), (event : CoreEvent) => {
+                new MenuButton("Audio: Off", (event : CoreEvent) => {
 
                     event.audio.toggle();
                     this.startMenu.changeButtonText(2, event.audio.getStateString());
@@ -25,17 +24,29 @@ export class TitleScreen {
     }
 
 
-    public update(assets : Assets, event : CoreEvent) : void {
+    public init(param : any, event : CoreEvent) : void {
 
-        this.startMenu.update(assets, event);
+        this.startMenu.activate(0);
+        this.startMenu.changeButtonText(2, event.audio.getStateString());
     }
 
 
-    public draw(canvas : Canvas, assets : Assets) : void {
+    public update(event : CoreEvent) : void {
 
-        canvas.drawBitmap(assets.getBitmap("background"), -8);
+        this.startMenu.update(event);
+    }
 
-        this.startMenu.draw(canvas, assets, 0, 40);
+
+    public redraw(canvas : Canvas) : void {
+
+        canvas.drawBitmap(canvas.assets.getBitmap("background"), -8);
+        this.startMenu.draw(canvas, 0, 40);
+    }
+
+
+    public onChange() : any {
+
+        return null;
     }
 
 }
