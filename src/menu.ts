@@ -1,0 +1,147 @@
+import { Assets } from "./assets.js";
+import { Bitmap, Canvas, TextAlign } from "./canvas.js";
+import { CoreEvent } from "./core.js";
+import { KeyState } from "./keyboard.js";
+import { negMod } from "./math.js";
+
+
+export class MenuButton {
+
+
+    private text : string;
+    private callback : (event : CoreEvent) => void;
+
+
+    constructor(text : string, callback : (event : CoreEvent) => void) {
+
+        this.text = text;
+        this.callback = callback;
+    }
+
+
+    public getText = () : string => this.text;
+    public evaluateCallback = (event : CoreEvent) => this.callback(event);
+
+
+    public clone() : MenuButton {
+
+        return new MenuButton(this.text, this.callback);
+    }
+
+
+    public changeText(newText : string) {
+
+        this.text = newText;
+    }
+}
+
+
+export class Menu {
+
+
+    private buttons : Array<MenuButton>;
+
+    private cursorPos : number = 0;
+    private active : boolean = false;
+    
+    private maxLength : number;
+
+
+    constructor(buttons : Array<MenuButton>, makeActive = false) {
+
+        this.buttons = buttons.map((_, i) => buttons[i].clone());
+        this.maxLength = Math.max(...this.buttons.map(b => b.getText().length));
+
+        this.active = makeActive;
+    }
+
+
+    public activate(cursorPos = this.cursorPos) : void {
+
+        this.cursorPos = cursorPos % this.buttons.length;
+        this.active = true;
+    }
+
+
+    public update(assets : Assets, event : CoreEvent) : void {
+
+        if (!this.active) return;
+
+        let oldPos = this.cursorPos;
+
+        if (event.keyboard.getActionState("up") == KeyState.Pressed) {
+
+            -- this.cursorPos;
+        }
+        else if (event.keyboard.getActionState("down") == KeyState.Pressed) {
+
+            ++ this.cursorPos;
+        }
+
+        if (oldPos != this.cursorPos) {
+
+            this.cursorPos = negMod(this.cursorPos, this.buttons.length);
+            
+            event.audio.playSample(assets.getSample("choose"), 0.60);
+        }
+
+        let activeButton = this.buttons[this.cursorPos];
+        
+        if (activeButton != null && (
+            event.keyboard.getActionState("select") == KeyState.Pressed ||
+            event.keyboard.getActionState("start") == KeyState.Pressed)) {
+
+            activeButton.evaluateCallback(event);
+            
+            event.audio.playSample(assets.getSample("select"), 0.60);
+        }
+    }
+
+
+    public draw(canvas : Canvas, assets : Assets, 
+        x = 0, y = 0, xoff = -15, yoff = 12) {
+
+        const BOX_OFFSET = 4;
+        const MAGIC_XOFF = -4;
+        const MAGIC_YOFF = -6; // It's magic!
+
+        if (!this.active) return;
+
+        let font : Bitmap | undefined;
+
+        let w = this.maxLength * (24 + xoff);
+        let h = this.buttons.length * yoff;
+
+        let dx = x + canvas.width/2 - w/2;
+        let dy = y + canvas.height/2 - h/2; 
+
+        canvas.setFillColor(0, 0, 0, 0.67)
+            .fillRect(dx - BOX_OFFSET, dy - BOX_OFFSET,
+                      w + BOX_OFFSET*2, h + BOX_OFFSET*2);
+
+        for (let i = 0; i < this.buttons.length; ++ i) {
+
+            font = assets.getBitmap(i == this.cursorPos ? "fontYellow" : "font")
+
+            canvas.drawText(font, this.buttons[i].getText(),
+                dx + MAGIC_XOFF, 
+                dy + i * yoff + MAGIC_YOFF, 
+                xoff, 0);
+        } 
+    }
+
+
+    public isActive = () : boolean => this.active;
+
+
+    public deactivate() : void {
+
+        this.active = false;
+    }
+
+
+    public changeButtonText(index : number, text : string) : void {
+
+        this.buttons[index].changeText(text);
+    }
+}

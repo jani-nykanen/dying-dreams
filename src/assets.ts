@@ -36,6 +36,7 @@ export class Assets {
 
         this.bitmaps.set("background", createBackgroundBitmap(160, 160, 8));
         this.bitmaps.set("font", generateFont("12px Arial", 24, 24, 2, 8, 127));
+        this.bitmaps.set("fontYellow", generateFont("12px Arial", 24, 24, 2, 8, 127, [255, 255, 0]));
         this.bitmaps.set("fontBig", generateFont("bold 24px Arial", 32, 32, 2, 8, 127, [170, 255, 0], true));
     }
 
@@ -74,6 +75,19 @@ export class Assets {
                 [[128, 12], [144, 12], [160, 12], [176, 12], [192, 12], [208, 60]],
                 0.60, "sawtooth", Ramp.Instant, 0.10
             ));
+
+        this.samples.set("choose",
+            event.audio.createSample(
+                [[160, 6]],
+                0.70, "square", Ramp.Instant));
+        this.samples.set("select",
+            event.audio.createSample(
+                [[192, 10]],
+                0.70, "square", Ramp.Instant, 0.30));
+        this.samples.set("pause",
+            event.audio.createSample(
+                [[128, 4], [144, 6]],
+                0.70, "square", Ramp.Exponential));    
     }
 
 

@@ -17,6 +17,7 @@ window.onload = () => {
             .addAction("undo", "Backspace", "KeyZ")
             .addAction("restart", "KeyR")
             .addAction("start", "Enter")
+            .addAction("pause", "Enter")
             .addAction("select", "Space");
             
         event.audio.setGlobalVolume(0.50);

@@ -135,17 +135,14 @@ export class Canvas {
     public clear = (r = 255, g = r, b = g) : Canvas => this.setFillColor(r, g, b).fillRect();
 
 
-    public drawBitmapRegion(bmp : Bitmap | null, 
+    public drawBitmapRegion(bmp : Bitmap | undefined, 
         sx : number, sy : number, sw : number, sh : number, 
         dx : number, dy : number, flip = Flip.None) : Canvas {
 
-        if (bmp == null || sw <= 0 || sh <= 0) 
+        if (bmp == undefined || sw <= 0 || sh <= 0) 
             return this;
 
         let c = this.ctx;
-
-        // dx += this.translation.x;
-        // dy += this.translation.y;
 
         sx |= 0;
         sy |= 0;
@@ -185,9 +182,9 @@ export class Canvas {
     }
 
 
-    public drawBitmap(bmp : Bitmap | null, dx = 0.0, dy = 0.0, flip = Flip.None) : Canvas {
+    public drawBitmap(bmp : Bitmap | undefined, dx = 0.0, dy = 0.0, flip = Flip.None) : Canvas {
 
-        if (bmp == null)
+        if (bmp == undefined)
             return this;
 
         return this.drawBitmapRegion(bmp, 0, 0, bmp.width, bmp.height, dx, dy, flip);
@@ -196,12 +193,12 @@ export class Canvas {
 
     // Note: this method does not support flipping (reason: laziness, also 
     // don't need it here)
-    public drawHorizontallyWavingBitmapRegion(bmp : Bitmap | null, 
+    public drawHorizontallyWavingBitmapRegion(bmp : Bitmap | undefined, 
         sx : number, sy : number, sw : number, sh : number, 
         dx : number, dy : number,
         wave : number, period : number, amplitude : number) : Canvas {
 
-        if (bmp == null)
+        if (bmp == undefined)
             return this;
 
         sx |= 0;
@@ -226,11 +223,11 @@ export class Canvas {
     }
 
 
-    public drawText(font : Bitmap | null, str : string, 
+    public drawText(font : Bitmap | undefined, str : string, 
         dx : number, dy : number, 
         xoff = 0.0, yoff = 0.0, align = TextAlign.Left) : Canvas {
 
-        if (font == null)
+        if (font == undefined)
             return this;
 
         let cw = (font.width / 16) | 0;

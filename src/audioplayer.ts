@@ -59,9 +59,9 @@ export class AudioPlayer {
     }
 
 
-    public toggle(state : boolean) : void {
+    public toggle(state = !this.enabled) : boolean {
 
-        this.enabled = state;
+        return (this.enabled = state);
     }
 
 
@@ -72,4 +72,7 @@ export class AudioPlayer {
 
 
     public isEnabled = () : boolean => this.enabled;
+
+
+    public getStateString = () : string => "Audio: " + ["Off", "On "][Number(this.enabled)]; 
 }

@@ -508,37 +508,6 @@ export class Stage {
     }
 
 
-    private undo() : void {
-
-        let s = this.states.pop();
-        if (s == null)
-            return;
-
-        this.activeState = s.clone();
-
-        this.moving = false;
-        this.moveTimer = 0;
-        this.moveData.fill(Direction.None);
-    }
-
-
-    private restart() : void {
-
-        // There is a bug that requires this...
-        if (!this.moving)
-            this.oldState = this.activeState.clone();
-
-        this.pushState();
-        this.activeState = new PuzzleState(
-            this.baseTilemap,
-            this.baseTilemap.map(v => Number(DYNAMIC_TILES.includes(v)) * v),
-            this.width, this.height, Flip.None);
-        this.moveData = (new Array<Direction> (this.width*this.height)).fill(Direction.None);
-
-        this.activeState.setFlip(Flip.None);
-    }
-
-
     private drawTerrain(canvas : Canvas, bmp : Bitmap) : void {
 
         let sx : number;
@@ -751,12 +720,43 @@ export class Stage {
     }
 
 
-    public update(event : CoreEvent, assets : Assets, control = true) : boolean {
+    public restart() : void {
+
+        // There is a bug that requires this...
+        if (!this.moving)
+            this.oldState = this.activeState.clone();
+
+        this.pushState();
+        this.activeState = new PuzzleState(
+            this.baseTilemap,
+            this.baseTilemap.map(v => Number(DYNAMIC_TILES.includes(v)) * v),
+            this.width, this.height, Flip.None);
+        this.moveData = (new Array<Direction> (this.width*this.height)).fill(Direction.None);
+
+        this.activeState.setFlip(Flip.None);
+    }
+
+
+    public undo() : void {
+
+        let s = this.states.pop();
+        if (s == null)
+            return;
+
+        this.activeState = s.clone();
+
+        this.moving = false;
+        this.moveTimer = 0;
+        this.moveData.fill(Direction.None);
+    }
+
+
+    public update(event : CoreEvent, assets : Assets) : boolean {
 
         const STATIC_ANIMATION_SPEED = 0.025;
         
         this.move(assets, event);
-        if (!this.cleared && control) {
+        if (!this.cleared) {
 
             if (this.startTimer > 0) {
 
@@ -768,15 +768,17 @@ export class Stage {
 
                 if (event.keyboard.getActionState("undo") == KeyState.Pressed) {
 
+                    event.audio.playSample(assets.getSample("choose"), 0.60);
                     this.undo();
                 }
                 else if (event.keyboard.getActionState("restart") == KeyState.Pressed) {
 
+                    event.audio.playSample(assets.getSample("choose"), 0.60);
                     this.restart();
                 }
             }
         }
-        else if (control) {
+        else {
 
             if ((this.clearTimer -= event.step) <= 0) {
 
@@ -857,4 +859,7 @@ export class Stage {
 
         ++ this.stageIndex;
     }
+
+
+    public canBeInterrupted = () : boolean => !this.cleared && this.startTimer <= 0;
 }
