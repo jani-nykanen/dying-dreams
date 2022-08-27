@@ -5,7 +5,6 @@ import { CoreEvent } from "./core.js";
 import { KeyState } from "./keyboard.js";
 import { nextParticle, RubbleParticle, StarParticle } from "./particle.js";
 import { Direction, PuzzleState } from "./puzzlestate.js";
-import { Sample } from "./sample.js";
 import { COLUMN_COUNT, createTerrainMap } from "./terrainmap.js";
 import { RGBA } from "./vector.js";
 
@@ -444,8 +443,8 @@ export class Stage {
         if (this.cleared) {
 
             this.clearTimer = CLEAR_WAIT_TIME;
+            event.audio.playSample(assets.getSample("victory"), 0.80);
         }
-
         return somethingHappened;
     }
 

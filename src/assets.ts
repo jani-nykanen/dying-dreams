@@ -69,6 +69,11 @@ export class Assets {
                 [[144, 8]],
                 1.0, "triangle", Ramp.Exponential, 0.20
             ));    
+        this.samples.set("victory",
+            event.audio.createSample(
+                [[128, 12], [144, 12], [160, 12], [176, 12], [192, 12], [208, 60]],
+                0.60, "sawtooth", Ramp.Instant, 0.10
+            ));
     }
 
 

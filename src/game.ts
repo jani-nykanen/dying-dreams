@@ -10,7 +10,7 @@ export class Game {
 
 
     private stage : Stage;
-    private stageIndex = 3;
+    private stageIndex = 1;
     
     private assets : Assets;
     private transition : Transition;
