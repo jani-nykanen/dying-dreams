@@ -7,7 +7,6 @@ import { Stage } from "./stage.js";
 import { TransitionType } from "./transition.js";
 
 
-
 export class Game implements Scene {
 
 
@@ -85,7 +84,7 @@ export class Game implements Scene {
         if (param != null) {
 
             this.stageIndex = Number(param);
-            this.stage.nextStage(LEVEL_DATA[this.stageIndex-1]);
+            this.stage.changeStage(this.stageIndex, LEVEL_DATA[this.stageIndex-1]);
         }
     }
 
@@ -115,7 +114,16 @@ export class Game implements Scene {
             event.transition.activate(true, TransitionType.Circle, 1.0/30.0,
             () => {
 
-                this.stage.nextStage(LEVEL_DATA[this.stageIndex ++]);
+                try {
+
+                    window.localStorage.setItem("dying_dreams_js13k_save", String(this.stageIndex+1));
+                }
+                catch (e) {
+
+                    console.log(e);
+                }
+                ++ this.stageIndex;
+                this.stage.changeStage(this.stageIndex, LEVEL_DATA[this.stageIndex-1]);
             });
         }
         
@@ -134,11 +142,5 @@ export class Game implements Scene {
                   .fillRect();
             this.pauseMenu.draw(canvas);
         }
-    }
-
-
-    public onChange() : any {
-
-        return null;
     }
 }

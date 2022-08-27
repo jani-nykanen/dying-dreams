@@ -838,7 +838,7 @@ export class Stage {
     }
 
 
-    public nextStage(newMapdata : Array<number>) : void {
+    public changeStage(index : number, newMapdata : Array<number>) : void {
 
         this.baseTilemap = Array.from(newMapdata);
 
@@ -857,7 +857,16 @@ export class Stage {
 
         this.startTimer = START_TIME;
 
-        ++ this.stageIndex;
+        this.stageIndex = index;
+    
+        for (let r of this.rubble) {
+            
+            r.kill();
+        }
+        for (let s of this.stars) {
+
+            s.kill();
+        }
     }
 
 

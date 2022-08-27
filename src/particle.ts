@@ -79,6 +79,11 @@ export class Particle {
 
 
     public doesExist = () : boolean => this.exist;
+
+    public kill() : void {
+
+        this.exist = false;
+    }
 }
 
 

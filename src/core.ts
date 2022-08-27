@@ -5,12 +5,14 @@ import { Keyboard } from "./keyboard.js";
 import { Transition } from "./transition.js";
 
 
+type SceneParam = number | string;
+
+
 export interface Scene {
 
     init(param : any, event : CoreEvent) : void;
     update(event : CoreEvent) : void;
     redraw(canvas : Canvas) : void;
-    onChange() : any;
 }
 
 
@@ -50,9 +52,9 @@ export class CoreEvent {
     }
 
 
-    public changeScene(name : string) : void {
+    public changeScene(name : string, param : SceneParam = 0) : void {
 
-        this.core.changeScene(name);
+        this.core.changeScene(name, param);
     }
 }
 
@@ -156,7 +158,7 @@ export class Core {
     }
 
 
-    public changeScene(name : string) : void {
+    public changeScene(name : string, param : SceneParam = 0) : void {
 
         let newScene = this.scenes.get(name);
         if (newScene == undefined) {
@@ -164,7 +166,7 @@ export class Core {
             throw "No scene with name: " + name;
         }
 
-        newScene.init(this.activeScene?.onChange(), this.event);
+        newScene.init(param, this.event);
         this.activeScene = newScene;
     }
 }
