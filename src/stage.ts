@@ -1,4 +1,3 @@
-import { animate } from "./animator.js";
 import { Assets } from "./assets.js";
 import { Bitmap, Canvas, Flip, TextAlign } from "./canvas.js";
 import { CoreEvent } from "./core.js";
@@ -673,6 +672,106 @@ export class Stage {
     }
 
 
+    private drawAnimatedFigure(canvas : Canvas, bmp : Bitmap, 
+        x : number, y : number, dx : number, dy : number, 
+        direction : Direction) : void {
+    
+        const LEG_X = [0, 16, 16, 32, 32, 48];
+        const LEG_Y = [8, 0, 8, 0, 8, 0];
+    
+        let frame = 0;
+        let climbing = false;
+    
+        let horizontal = direction == Direction.Left || direction == Direction.Right;
+    
+        // Check if climbing
+        if (!horizontal &&
+            (this.activeState.getTile(0, x, y) == 2 &&
+            (this.activeState.getTile(0, x, y+1) != 1 || direction == Direction.Down)) ||
+            (direction == Direction.Up && this.activeState.getTile(0, x, y+1) == 2)) {
+    
+            climbing = true;
+            frame = 0;
+            if (direction != Direction.None) {
+    
+                frame += Math.floor(this.moveTimer * 2);
+            }
+        }
+        // Or falling
+        else if (direction == Direction.Down && 
+            this.activeState.getTile(0, x, y) != 2 && 
+            this.activeState.getTile(1, x, y+1) != 4) {
+    
+            frame = 5;
+        }
+        // Or not being carried, so can be animated
+        else if (direction != Direction.None && 
+            (this.activeState.getTile(1, x, y+1) != 4 || 
+            (y < this.height-1 && this.moveData[(y+1) * this.width + x] == Direction.None))) {
+    
+            frame = 1 + Math.floor(4 * this.moveTimer);
+        }
+    
+        let sy = 16;
+        if (this.activeState.getTile(1, x, y-1) == 4)
+                    sy = 32;
+    
+        if (climbing) {
+    
+            canvas.drawBitmapRegion(bmp, 64, 16, 16, 16, dx, dy+1,
+                frame == 0 ? Flip.None : Flip.Horizontal);
+            return;
+        }
+    
+        canvas.drawBitmapRegion(bmp, 0, sy, 16, 8, 
+                dx, dy + 1, this.activeState.getFlip())
+              .drawBitmapRegion(bmp, LEG_X[frame], sy + LEG_Y[frame], 16, 8, 
+                                dx, dy + 9, this.activeState.getFlip()); 
+    }
+
+
+    private drawDynamicObjects(canvas : Canvas, bmp : Bitmap) : void {
+    
+        const DX = [0, 1, 0, -1, 0];
+        const DY = [0, 0, -1, 0, 1];
+    
+        let dx = 0;
+        let dy = 0;
+        let direction : Direction;
+    
+        this.activeState.iterate(1, (x : number, y : number, value : number) => {
+    
+            direction = this.moveData[y * this.width + x];
+    
+            dx = x*16;
+            dy = y*16;
+    
+            if (direction != Direction.None) {
+    
+                dx -= DX[Number(direction)] * (1.0 - this.moveTimer) * 16;
+                dy -= DY[Number(direction)] * (1.0 - this.moveTimer) * 16;
+            }
+            
+            switch (value) {
+    
+            // Human
+            case 4:
+                this.drawAnimatedFigure(canvas, bmp, x, y, dx, dy, direction);
+                break;
+    
+            // Boulder
+            case 10:
+    
+                canvas.drawBitmapRegion(bmp, 80, 16, 16, 16, dx, dy+1);
+                break;
+    
+            default:
+                break;
+            }
+        });
+    }
+
+
     private drawStageClearText(canvas : Canvas, bmpFont : Bitmap) : void {
 
         const WAIT_TIME = 60;
@@ -816,7 +915,7 @@ export class Stage {
             r.draw(canvas, bmpBase);
         }
 
-        animate(this.activeState, this.moveData, this.moveTimer, canvas, bmpBase);
+        this.drawDynamicObjects(canvas, bmpBase);
 
         for (let s of this.stars) {
 

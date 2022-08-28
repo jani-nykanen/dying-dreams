@@ -23,4 +23,3 @@ window.onload = () => (new Core(160, 144))
                 .addAction("select", "Space");  
             event.audio.setGlobalVolume(0.50);
         });
-

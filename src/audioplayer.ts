@@ -31,7 +31,7 @@ export class AudioPlayer {
 
     public playSample(s : Sample | undefined, volume = 1.0) : void {
 
-        if (s == undefined)
+        if (!this.enabled || s == undefined)
             return;
 
         try {

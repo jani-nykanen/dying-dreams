@@ -17,8 +17,8 @@ export class PuzzleState {
     private flip : Flip;
     private toggleWallsState : boolean;
 
-    public readonly width : number;
-    public readonly height : number;
+    private readonly width : number;
+    private readonly height : number;
 
 
     constructor(staticLayer : Array<number>, dynamicLayer : Array<number>,
