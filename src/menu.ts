@@ -120,7 +120,7 @@ export class Menu {
 
         for (let i = 0; i < this.buttons.length; ++ i) {
 
-            font = canvas.assets.getBitmap(i == this.cursorPos ? "fontYellow" : "font")
+            font = canvas.getBitmap(i == this.cursorPos ? "fontYellow" : "font")
 
             canvas.drawText(font, this.buttons[i].getText(),
                 dx + MAGIC_XOFF, 

@@ -49,10 +49,20 @@ export class TitleScreen implements Scene {
     
     private startGame(event : CoreEvent, index = 1) : void {
 
+        
+
         event.transition.activate(true, TransitionType.Circle, 1.0/30.0,
             (event : CoreEvent) => {
 
-                event.changeScene("game", index);
+                if (index > 1) {
+
+                    event.changeScene("game", index);
+                }
+                else {
+
+                    event.changeScene("story", 0);
+                    event.transition.deactivate();
+                }
             });
     }
 
@@ -65,7 +75,7 @@ export class TitleScreen implements Scene {
         const CORRECTION = 1.0;
         const AMPLITUDE = 4;
 
-        let font = canvas.assets.getBitmap("fontBig");
+        let font = canvas.getBitmap("fontBig");
 
         let dx : number;
         let dy : number;
@@ -135,20 +145,20 @@ export class TitleScreen implements Scene {
 
         const CENTER_CORRECTION = -9;
 
-        canvas.drawBitmap(canvas.assets.getBitmap("background"), 0, -8)
+        canvas.drawBitmap(canvas.getBitmap("background"), 0, -8)
               .setFillColor(0, 0, 0, 0.33)
               .fillRect();
               
         if (this.phase == 0) {
 
-            canvas.drawText(canvas.assets.getBitmap("font"), "(c)2022 Jani Nykanen",
+            canvas.drawText(canvas.getBitmap("font"), "(c)2022 Jani Nykanen",
                 canvas.width/2 + CENTER_CORRECTION, 
                 canvas.height-20, 
                 -17, 0, TextAlign.Center);
 
             if (this.enterTimer >= 30) {
 
-                canvas.drawText(canvas.assets.getBitmap("fontYellow"), "Press ENTER",
+                canvas.drawText(canvas.getBitmap("fontYellow"), "Press ENTER",
                     canvas.width/2 + CENTER_CORRECTION, canvas.height/2 + 24, -17, 0, TextAlign.Center);
             }
         }

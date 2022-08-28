@@ -59,7 +59,7 @@ export class Game implements Scene {
 
     private drawBackground(canvas : Canvas) : void {
 
-        let bmp = canvas.assets.getBitmap("background");
+        let bmp = canvas.getBitmap("background");
         if (bmp == undefined)
             return;
 
@@ -134,7 +134,7 @@ export class Game implements Scene {
     public redraw(canvas : Canvas) : void {
 
         this.drawBackground(canvas);
-        this.stage.draw(canvas, canvas.assets);
+        this.stage.draw(canvas);
 
         if (this.pauseMenu.isActive()) {
 

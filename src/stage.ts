@@ -900,10 +900,10 @@ export class Stage {
     }
 
 
-    public draw(canvas : Canvas, assets : Assets) : void {
+    public draw(canvas : Canvas) : void {
     
-        let bmpBase = assets.getBitmap("base");
-        let bmpFontBig = assets.getBitmap("fontBig");
+        let bmpBase = canvas.getBitmap("base");
+        let bmpFontBig = canvas.getBitmap("fontBig");
         if (bmpBase == null || bmpFontBig == null)
             return;
 

@@ -1,11 +1,13 @@
 import { Core, CoreEvent } from "./core.js"
 import { Game } from "./game.js";
+import { StoryScreen } from "./storyscreen.js";
 import { TitleScreen } from "./titlescreen.js";
 
 
 window.onload = () => (new Core(160, 144))
         .addScene("game", new Game())
         .addScene("titlescreen", new TitleScreen())
+        .addScene("story", new StoryScreen())
         .run("titlescreen", (event : CoreEvent) => {
 
             // TODO: Construct here!

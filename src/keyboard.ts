@@ -19,6 +19,8 @@ export class Keyboard {
     private prevent : Array<string>;
     private actions : Map<string, [string, string | undefined]>;
 
+    private anyPressed : boolean = false;
+
 
     constructor() {
 
@@ -54,7 +56,7 @@ export class Keyboard {
             if (this.states.get(key) === KeyState.Down)
                 return;
             this.states.set(key, KeyState.Pressed);
-
+            this.anyPressed = true;
             return;
         }
 
@@ -73,6 +75,8 @@ export class Keyboard {
             else if (this.states.get(k) === KeyState.Released)
                 this.states.set(k, KeyState.Up);
         }
+
+        this.anyPressed = false;
     }
 
 
@@ -110,5 +114,8 @@ export class Keyboard {
         }
         return state;
     }
+
+
+    public isAnyPressed = () : boolean => this.anyPressed;
     
 }

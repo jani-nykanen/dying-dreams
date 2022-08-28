@@ -71,7 +71,7 @@ export class Canvas {
     private canvas : HTMLCanvasElement;
     private ctx : CanvasRenderingContext2D;
 
-    public readonly assets : Assets;
+    private readonly assets : Assets;
 
 
     public get width() {
@@ -361,4 +361,7 @@ export class Canvas {
 
     // Looks silly, but it is here for abstraction
     public convertToBitmap = () : Bitmap => this.canvas;
+
+
+    public getBitmap = (name : string) : Bitmap | undefined => this.assets.getBitmap(name); 
 }
