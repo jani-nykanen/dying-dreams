@@ -1,5 +1,6 @@
-import { Canvas } from "./canvas.js";
+import { Canvas, TextAlign } from "./canvas.js";
 import { CoreEvent, Scene } from "./core.js";
+import { KeyState } from "./keyboard.js";
 import { LEVEL_DATA } from "./leveldata.js";
 import { clamp } from "./math.js";
 import { Menu, MenuButton } from "./menu.js";
@@ -10,6 +11,9 @@ export class TitleScreen implements Scene {
 
 
     private startMenu : Menu
+    private phase = 0;
+    private enterTimer = 29;
+    private waveTimer = 0;
 
 
     constructor() {
@@ -58,22 +62,26 @@ export class TitleScreen implements Scene {
         const POS_Y = [16, 40];
         const XOFF = -14;
         const TEXT = ["DYING", "DREAMS"];
+        const CORRECTION = 1.0;
+        const AMPLITUDE = 4;
 
         let font = canvas.assets.getBitmap("fontBig");
 
         let dx : number;
+        let dy : number;
 
         for (let i = 0; i < 2; ++ i) {
 
-            // 1.20 is a "correction number", since the font is not properly aligned
-            // to the "grid"
-            dx = canvas.width/2 - (TEXT[i].length + 1.20) * (32 + XOFF) / 2.0;
+            dx = canvas.width/2 - (TEXT[i].length + CORRECTION) * (32 + XOFF) / 2.0;
             for (let j = 0; j < TEXT[i].length; ++ j) {
 
+                dy = Math.round(Math.sin(this.waveTimer + Math.PI*2 / TEXT[i].length * j) * AMPLITUDE);
                 for (let k = 1; k >= 0; -- k) {
 
-                    canvas.drawText(font, TEXT[i].charAt(j), 
-                        dx + j * (32 + XOFF) + k, POS_Y[i] + k);
+                    canvas.drawText(font, 
+                        TEXT[i].charAt(j), 
+                        dx + j * (32 + XOFF) + k, 
+                        dy + POS_Y[i] + k);
                 }
             }
         }
@@ -84,22 +92,70 @@ export class TitleScreen implements Scene {
 
         this.startMenu.activate(0);
         this.startMenu.changeButtonText(2, event.audio.getStateString());
+
+        if (param != null) {
+
+            this.phase = Number(param);
+            if (this.phase == 1) {
+
+                this.startMenu.activate(1);
+            }
+        }
     }
 
 
     public update(event : CoreEvent) : void {
 
-        this.startMenu.update(event);
+        const WAVE_SPEED = Math.PI / 60;
+
+        this.waveTimer = (this.waveTimer + WAVE_SPEED*event.step) % (Math.PI*2);
+
+        if (event.transition.isActive())
+            return;
+
+        if (this.phase == 0) {
+
+            if (event.keyboard.getActionState("start") == KeyState.Pressed ||
+                event.keyboard.getActionState("select") == KeyState.Pressed) {
+
+                event.audio.playSample(event.assets.getSample("pause"), 0.60);
+                ++ this.phase;
+            }
+
+            this.enterTimer = (this.enterTimer + event.step) % 60;
+        }
+        else {
+            
+            this.startMenu.update(event);
+        }
     }
 
 
     public redraw(canvas : Canvas) : void {
 
-        canvas.drawBitmap(canvas.assets.getBitmap("background"), -8)
+        const CENTER_CORRECTION = -9;
+
+        canvas.drawBitmap(canvas.assets.getBitmap("background"), 0, -8)
               .setFillColor(0, 0, 0, 0.33)
               .fillRect();
               
-        this.startMenu.draw(canvas, 0, 40);
+        if (this.phase == 0) {
+
+            canvas.drawText(canvas.assets.getBitmap("font"), "(c)2022 Jani Nykanen",
+                canvas.width/2 + CENTER_CORRECTION, 
+                canvas.height-20, 
+                -17, 0, TextAlign.Center);
+
+            if (this.enterTimer >= 30) {
+
+                canvas.drawText(canvas.assets.getBitmap("fontYellow"), "Press ENTER",
+                    canvas.width/2 + CENTER_CORRECTION, canvas.height/2 + 24, -17, 0, TextAlign.Center);
+            }
+        }
+        else {
+
+            this.startMenu.draw(canvas, 0, 40);
+        }
         this.drawLogo(canvas);
     }
 

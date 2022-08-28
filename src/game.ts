@@ -49,7 +49,7 @@ export class Game implements Scene {
                     this.pauseMenu.deactivate();
                     event.transition.activate(true, TransitionType.Fade,
                         1.0/30.0, () => {
-                            event.changeScene("titlescreen");
+                            event.changeScene("titlescreen", 1);
                         }, 6);
                 })
             ]
