@@ -98,7 +98,7 @@ export class Menu {
     }
 
 
-    public draw(canvas : Canvas, x = 0, y = 0, xoff = -15, yoff = 12) {
+    public draw(canvas : Canvas, x = 0, y = 0, xoff = -15, yoff = 12, boxAlpha = 0.67) {
 
         const BOX_OFFSET = 4;
         const MAGIC_XOFF = -4;
@@ -114,7 +114,7 @@ export class Menu {
         let dx = x + canvas.width/2 - w/2;
         let dy = y + canvas.height/2 - h/2; 
 
-        canvas.setFillColor(0, 0, 0, 0.67)
+        canvas.setFillColor(0, 0, 0, boxAlpha)
             .fillRect(dx - BOX_OFFSET, dy - BOX_OFFSET,
                       w + BOX_OFFSET*2, h + BOX_OFFSET*2);
 

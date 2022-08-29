@@ -17,7 +17,7 @@ export class AudioPlayer {
 
         this.ctx = new AudioContext();
 
-        this.enabled = true;
+        this.enabled = false;
         this.globalVolume = globalVolume;
     }
 
