@@ -111,20 +111,32 @@ export class Game implements Scene {
 
         if (this.stage.update(event, event.assets)) {
 
-            event.transition.activate(true, TransitionType.Circle, 1.0/30.0,
-            () => {
+            if (this.stageIndex == LEVEL_DATA.length) {
 
-                try {
+                event.transition.activate(true, TransitionType.Fade, 1.0/60.0, (event : CoreEvent) => {
 
-                    window.localStorage.setItem("dying_dreams_js13k_save", String(this.stageIndex+1));
-                }
-                catch (e) {
+                    event.transition.deactivate();
+                    event.changeScene("story", 1);
 
-                    console.log(e);
-                }
-                ++ this.stageIndex;
-                this.stage.changeStage(this.stageIndex, LEVEL_DATA[this.stageIndex-1]);
-            });
+                }, 6);
+            }
+            else {
+
+                event.transition.activate(true, TransitionType.Circle, 1.0/30.0,
+                () => {
+
+                    try {
+
+                        window.localStorage.setItem("dying_dreams_js13k_save", String(this.stageIndex+1));
+                    }
+                    catch (e) {
+
+                        console.log(e);
+                    }
+                    ++ this.stageIndex;
+                    this.stage.changeStage(this.stageIndex, LEVEL_DATA[this.stageIndex-1]);
+                });
+            }
         }
         
         this.backgroundTimer = (this.backgroundTimer + BACKGROUND_SPEED*event.step) % (Math.PI*2);

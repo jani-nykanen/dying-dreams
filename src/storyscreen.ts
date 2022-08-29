@@ -1,4 +1,4 @@
-import { Canvas } from "./canvas";
+import { Canvas, TextAlign } from "./canvas";
 import { CoreEvent, Scene } from "./core";
 import { TransitionType } from "./transition";
 
@@ -11,9 +11,9 @@ const STORY = [
     ],
     [
         "You wake up.",
-        "Everyone around you\nis dead.",
-        "Everyone you ever\ncared about.",
-        "Did you kill them,\nor were they\nkilled by your\ndream?",
+        "Everyone around\nyou is dead.",
+        "Everyone you\never cared\nabout.",
+        "Did you kill\nthem or were\nthey killed by\nyour dream?",
         "That you will\nnever know."
     ]
 ];
@@ -30,8 +30,11 @@ export class StoryScreen implements Scene {
     private charTimer = 0;
     private ready : boolean = false;
     private rectTimer : number = 0;
-
+    private maxLength = 0;
+    private height = 0;
     private phase : 0 | 1 = 0;
+
+    private isEnding = false;
 
 
     constructor() {}
@@ -46,6 +49,10 @@ export class StoryScreen implements Scene {
         this.ready = false;
 
         this.phase = Number(param) as (0 | 1);
+
+        let arr = STORY[this.phase][0].split("\n");
+        this.maxLength = Math.max(...arr.map(s => s.length));
+        this.height = arr.length;
     }
 
 
@@ -54,7 +61,9 @@ export class StoryScreen implements Scene {
         const RECT_SPEED = 0.15;
         const CHAR_TIME = 4;
 
-        if (event.transition.isActive()) return;
+        let arr : string[];
+
+        if (event.transition.isActive() || this.isEnding) return;
 
         this.rectTimer = (this.rectTimer + RECT_SPEED*event.step) % (Math.PI*2);
 
@@ -79,13 +88,27 @@ export class StoryScreen implements Scene {
 
                 if (++ this.textIndex == STORY[this.phase].length) {
 
-                    event.changeScene("game", 1);
-                    event.transition.activate(false, TransitionType.Circle, 1.0/30.0, () => {});
+                    if (this.phase == 0) {
+
+                        event.changeScene("game", 1);
+                        event.transition.activate(false, TransitionType.Circle, 1.0/30.0, () => {});
+                    }
+                    else {
+
+                        this.isEnding = true;
+                        event.transition.activate(false, TransitionType.Fade, 1.0/120.0, () => {}, 6);
+                    }
                 }
                 else {
 
                     this.charIndex = 0;
                     this.charTimer = 0;
+
+                    arr = STORY[this.phase][this.textIndex].split("\n");
+                    this.maxLength = Math.max(...arr.map(s => s.length));
+                    this.height = arr.length;
+
+                    this.ready = false;
                 }
                 event.audio.playSample(event.assets.getSample("choose"), 0.60);
             }
@@ -99,26 +122,40 @@ export class StoryScreen implements Scene {
         // (i.e compute actual text location. If size permits...)
 
         const XOFF = -15;
-        const POS_Y = 40;
+        const YOFF = -8;
+        const CORRECTION_X = -8;
+        const CORRECTION_Y = -8;
 
         let font = canvas.getBitmap("font");
 
         canvas.clear(0);
 
+        if (this.isEnding) {
+
+            canvas.drawText(font, "THE END", 
+                canvas.width/2 + CORRECTION_X, 
+                canvas.height/2 + CORRECTION_Y, 
+                XOFF, 0, TextAlign.Center);
+            return;
+        }
+
+        let dx = canvas.width/2 - (this.maxLength * (24 + XOFF)) / 2 + CORRECTION_X;
+        let dy = canvas.height/2 - this.height * (24 + YOFF) / 2 + CORRECTION_Y;
+
         if ((this.textIndex > 0 || this.charIndex > 0) &&
             this.textIndex < STORY[this.phase].length) {
 
-            // TODO: Compute location
             canvas.drawText(font, 
                 STORY[this.phase][this.textIndex].substring(0, this.charIndex),
-                8, POS_Y, XOFF, -8);
+                dx, dy, XOFF, YOFF);
         }
 
         let rectY = Math.round(Math.sin(this.rectTimer)) * 2;
         if (this.ready) {
 
             canvas.setFillColor(255)
-                  .fillRect(128, 84 + rectY, 6, 6);
+                  .fillRect(dx + this.maxLength * (24 + XOFF) + 4, 
+                  dy + this.height * (24 + YOFF) + 4 + rectY, 6, 6);
         }
     }
 }
