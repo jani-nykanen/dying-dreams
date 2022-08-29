@@ -1,0 +1,77 @@
+import { Canvas, TextAlign } from "./canvas.js";
+import { CoreEvent, Scene } from "./core.js";
+import { TransitionType } from "./transition.js";
+
+
+
+export class StartIntro implements Scene {
+
+
+    private phase = 0;
+    private timer = 0;
+
+
+    public init(param: any, event: CoreEvent): void { 
+
+        event.transition.activate(false, TransitionType.Fade, 1.0/30.0, () => {}, 6);
+    }
+
+
+    public update(event: CoreEvent): void {
+
+        const PHASE_TIME = 60;
+
+        if (event.transition.isActive())
+            return;
+
+
+        if ((this.timer += event.step) >= PHASE_TIME ||
+            event.keyboard.isAnyPressed()) {
+
+            this.timer = 0;
+
+            event.transition.activate(true, TransitionType.Fade, 1.0/30.0, 
+                (event : CoreEvent) => {
+
+                    if (this.phase == 1) {
+
+                        event.changeScene("titlescreen", 0);
+                        event.transition.activate(false, TransitionType.Circle, 1.0/30.0, () => {});
+                    } 
+                    else {
+
+                        ++ this.phase;
+                    }
+                }, 6);
+        }
+    }
+
+
+    public redraw(canvas: Canvas) : void {
+        
+        const XOFF = -14;
+
+        let font = canvas.getBitmap("font");
+
+        canvas.clear(0);
+
+        if (this.phase == 0) {
+
+            canvas.drawText(font, "A game by", 
+                canvas.width/2 - 8, 
+                canvas.height/2 - 20, 
+                XOFF, 0, TextAlign.Center);
+            canvas.drawText(font, "Jani Nyk@nen", 
+                canvas.width/2 - 8, 
+                canvas.height/2 - 4, 
+                XOFF, 0, TextAlign.Center)
+        }
+        else {
+
+            canvas.drawText(font, "Made for js13k", 
+                canvas.width/2 - 8, 
+                canvas.height/2 - 12, 
+                XOFF, 0, TextAlign.Center);
+        }
+    }
+}

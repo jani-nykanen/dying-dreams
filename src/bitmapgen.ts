@@ -216,9 +216,12 @@ export const generateFont = (font : string,
 
         for (let x = 0; x < 16; ++ x) {
 
-            ctx.fillText(String.fromCharCode(i ++),
+            ctx.fillText(
+                i == "@".charCodeAt(0) ? "ä" : String.fromCharCode(i),
                 (x + 0.5) * charWidth, 
                 (y + 0.67) * charHeight);
+
+            ++ i;
         }
     }
 

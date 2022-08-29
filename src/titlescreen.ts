@@ -151,7 +151,7 @@ export class TitleScreen implements Scene {
               
         if (this.phase == 0) {
 
-            canvas.drawText(canvas.getBitmap("font"), "(c)2022 Jani Nykanen",
+            canvas.drawText(canvas.getBitmap("font"), "(c)2022 Jani Nyk@nen",
                 canvas.width/2 + CENTER_CORRECTION, 
                 canvas.height-20, 
                 -17, 0, TextAlign.Center);
