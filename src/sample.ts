@@ -38,20 +38,9 @@ export class Sample {
     }
 
 
-    public play(volume : number, isPossiblyFirefox = false) : void {
+    public play(volume : number) : void {
 
         let time = this.ctx.currentTime;
-
-        // Firefox throws error here...
-        try {
-            
-            if (this.oscillator != null) {
-
-                this.oscillator.stop(time);
-            }
-        }
-        catch (e) {}
-
         let timer = 0.0;
 
         let osc = this.ctx.createOscillator();
@@ -59,15 +48,9 @@ export class Sample {
 
         volume *= this.baseVolume;
 
-        if (!isPossiblyFirefox) {
-
-            this.gain.gain.cancelAndHoldAtTime(time);
-        }
-        else {
-
-            // This does nothing...
-            this.gain.gain.setValueAtTime(this.gain.gain.minValue, time);
-        }
+        // Not working on Firefox, or after Closure, possibly because not
+        // part of es2020 standard
+        // this.gain.gain.cancelAndHoldAtTime(time);
 
         osc.frequency.setValueAtTime(this.baseSequence[0][0], time);
         this.gain.gain.setValueAtTime(clamp(volume, 0.01, 1.0), time);

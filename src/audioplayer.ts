@@ -42,18 +42,8 @@ export class AudioPlayer {
 
             if (!this.errorLogged) {
 
-                console.log("Audio error: " + e  + "\nYou are probably using Firefox. Switching to different method instead.");
-                this.errorLogged = true;
-            }
-
-            // Nested try ugh...
-            try {
-
-                s.play(volume * this.globalVolume, true);
-            }
-            catch (e) {
-
                 console.log("Audio error: " + e);
+                this.errorLogged = true;
             }
         }
     }
