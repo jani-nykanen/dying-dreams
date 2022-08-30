@@ -25,6 +25,7 @@ export class Particle {
     protected radius = 8;
 
     protected exist = false;
+    protected loop = false;
 
 
     constructor() {
@@ -52,12 +53,22 @@ export class Particle {
 
         this.updateLogic(event);
 
-        if (this.pos.x + this.radius < 0 ||
-            this.pos.x - this.radius >= event.screenWidth ||
-            this.pos.y + this.radius < 0 ||
-            this.pos.y - this.radius >= event.screenHeight) {
+        if (this.loop) {
 
-            this.exist = false;
+            if (this.pos.y - this.radius >= event.screenHeight) {
+
+                this.pos.y -= event.screenHeight + this.radius;
+            }
+        }
+        else {
+
+            if (this.pos.x + this.radius < 0 ||
+                this.pos.x - this.radius >= event.screenWidth ||
+                this.pos.y + this.radius < 0 ||
+                this.pos.y - this.radius >= event.screenHeight) {
+
+                this.exist = false;
+            }
         }
     }
 
@@ -177,6 +188,59 @@ export class RubbleParticle extends Particle {
 
         this.spawnBase(x, y, sx, sy);
         this.tileIndex = tileIndex;
+    }
+}
+
+
+export class Bat extends Particle {
+
+
+    private frameTimer = 0;
+    private frame = 0;
+
+
+    constructor() {
+
+        super();
+
+        this.friction.x = 0.10;
+        this.friction.y = 0.10;
+        this.radius = 8;
+    }
+
+
+    protected updateLogic(event: CoreEvent) : void {
+
+        const ANIM_SPEED = 6;
+
+        if ((this.frameTimer += event.step) >= ANIM_SPEED) {
+
+            this.frameTimer %= ANIM_SPEED;
+            this.frame = (this.frame + 1) % 2;
+        }
+    }
+
+
+    public draw(canvas : Canvas, bmp : Bitmap) {
+
+        if (!this.exist)
+            return;
+
+        let px = Math.round(this.pos.x);
+        let py = Math.round(this.pos.y);
+
+        canvas.drawBitmapRegion(bmp, 
+            96, 32 + this.frame*8, 16, 8,
+            px-4, py-4);
+    }
+
+
+    public spawn(x : number, y : number, sx : number, sy : number) {
+
+        this.spawnBase(x, y, sx, sy);
+        this.speed.x = 0;
+
+        this.target.y *= -1;
     }
 }
 

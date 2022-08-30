@@ -2,8 +2,9 @@ import { Assets } from "./assets.js";
 import { Bitmap, Canvas, Flip, TextAlign } from "./canvas.js";
 import { CoreEvent } from "./core.js";
 import { KeyState } from "./keyboard.js";
-import { nextParticle, RubbleParticle, StarParticle } from "./particle.js";
+import { Bat, nextParticle, RubbleParticle, StarParticle } from "./particle.js";
 import { Direction, PuzzleState } from "./puzzlestate.js";
+import { Snowfall } from "./snowfall.js";
 import { COLUMN_COUNT, createTerrainMap } from "./terrainmap.js";
 import { RGBA } from "./vector.js";
 
@@ -38,6 +39,9 @@ export class Stage {
 
     private stars : Array<StarParticle>;
     private rubble : Array<RubbleParticle>;
+    private bats : Array<Bat>;
+
+    private snowfall : Snowfall;
 
     private stageIndex : number;
     private startTimer : number = START_TIME;
@@ -68,6 +72,9 @@ export class Stage {
 
         this.stars = new Array<StarParticle> ();
         this.rubble = new Array<RubbleParticle> ();
+        this.bats = new Array<Bat> ();
+
+        this.snowfall = new Snowfall();
     }
 
 
@@ -329,8 +336,10 @@ export class Stage {
 
 
     private spawnStarParticles(x : number, y : number, count : number, 
-        angleStart : number, color : RGBA) : void {
+        angleStart : number, color : RGBA, spawnBat = false) : void {
 
+        const BAT_SPEED_X_RANGE = 1.0;
+        const BAT_SPEED_Y = 0.5;
         const BASE_SPEED = 2.0;
         const VERTICAL_JUMP = -1.0;
 
@@ -345,6 +354,12 @@ export class Stage {
                     Math.cos(angle) * BASE_SPEED, 
                     Math.sin(angle) * BASE_SPEED + VERTICAL_JUMP,
                  color);
+        }   
+
+        if (spawnBat) {
+
+            (nextParticle(this.bats, Bat) as Bat)
+                .spawn(x, y, (Math.random() * 2 - 1.0) * BAT_SPEED_X_RANGE, BAT_SPEED_Y);
         }
     }
 
@@ -417,7 +432,7 @@ export class Stage {
                     color = COLORS[2];
                 }
 
-                this.spawnStarParticles(x*16 + 8, y*16 + 8, 4, Math.PI/4, color);
+                this.spawnStarParticles(x*16 + 8, y*16 + 8, 4, Math.PI/4, color, top == 4);
 
                 event.audio.playSample(assets.getSample("die"), 0.60);
 
@@ -852,8 +867,6 @@ export class Stage {
 
     public update(event : CoreEvent, assets : Assets) : boolean {
 
-        const STATIC_ANIMATION_SPEED = 0.025;
-        
         this.move(assets, event);
         if (!this.cleared) {
 
@@ -884,6 +897,13 @@ export class Stage {
                 return true;
             }
         }
+        return false;
+    }
+
+
+    public updateBackground(event : CoreEvent) : void {
+        
+        const STATIC_ANIMATION_SPEED = 0.025;
 
         this.staticAnimationTimer = (this.staticAnimationTimer + STATIC_ANIMATION_SPEED*event.step) % 1.0;
 
@@ -895,8 +915,12 @@ export class Stage {
 
             s.update(event);
         }
+        for (let b of this.bats) {
 
-        return false;
+            b.update(event);
+        }
+
+        this.snowfall.update(event);
     }
 
 
@@ -921,6 +945,12 @@ export class Stage {
 
             s.draw(canvas);
         }
+        for (let b of this.bats) {
+
+            b.draw(canvas, bmpBase);
+        }
+
+        this.snowfall.draw(canvas);
 
         if (this.cleared) {
 
@@ -928,7 +958,6 @@ export class Stage {
                   .fillRect();
             this.drawStageClearText(canvas, bmpFontBig);
         }
-        
         
         if (this.startTimer > 0) {
 
@@ -966,6 +995,12 @@ export class Stage {
 
             s.kill();
         }
+        for (let b of this.bats) {
+
+            b.kill();
+        }
+
+        this.snowfall.shuffle();
     }
 
 

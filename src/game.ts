@@ -93,6 +93,12 @@ export class Game implements Scene {
 
         const BACKGROUND_SPEED = 0.025;
 
+        if (!this.pauseMenu.isActive()) {
+            
+            this.stage.updateBackground(event);
+            this.backgroundTimer = (this.backgroundTimer + BACKGROUND_SPEED*event.step) % (Math.PI*2);
+        }
+
         if (event.transition.isActive())
             return;
 
@@ -137,9 +143,7 @@ export class Game implements Scene {
                     this.stage.changeStage(this.stageIndex, LEVEL_DATA[this.stageIndex-1]);
                 });
             }
-        }
-        
-        this.backgroundTimer = (this.backgroundTimer + BACKGROUND_SPEED*event.step) % (Math.PI*2);
+        } 
     }
 
 
