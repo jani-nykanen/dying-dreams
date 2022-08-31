@@ -49,29 +49,27 @@ export class StartIntro implements Scene {
 
     public redraw(canvas: Canvas) : void {
         
-        const XOFF = -14;
-
         let font = canvas.getBitmap("font");
 
         canvas.clear(0);
 
         if (this.phase == 0) {
 
-            canvas.drawText(font, "A game by", 
-                canvas.width/2 - 8, 
-                canvas.height/2 - 20, 
-                XOFF, 0, TextAlign.Center);
-            canvas.drawText(font, "Jani Nyk@nen", 
-                canvas.width/2 - 8, 
-                canvas.height/2 - 4, 
-                XOFF, 0, TextAlign.Center)
+            canvas.drawText(font, "A GAME BY", 
+                canvas.width/2, 
+                canvas.height/2 -10, 
+                0, 0, TextAlign.Center);
+            canvas.drawText(font, "JANI NYK@NEN", 
+                canvas.width/2, 
+                canvas.height/2 + 2, 
+                0, 0, TextAlign.Center)
         }
         else {
 
-            canvas.drawText(font, "Made for js13k", 
-                canvas.width/2 - 8, 
-                canvas.height/2 - 12, 
-                XOFF, 0, TextAlign.Center);
+            canvas.drawText(font, "MADE FOR JS13K", 
+                canvas.width/2, 
+                canvas.height/2 - 4, 
+                0, 0, TextAlign.Center);
         }
     }
 }

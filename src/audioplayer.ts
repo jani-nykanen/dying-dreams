@@ -64,5 +64,5 @@ export class AudioPlayer {
     public isEnabled = () : boolean => this.enabled;
 
 
-    public getStateString = () : string => "Audio: " + ["Off", "On "][Number(this.enabled)]; 
+    public getStateString = () : string => "AUDIO: " + ["OFF", "ON "][Number(this.enabled)]; 
 }

@@ -15,7 +15,7 @@ export class Sample {
     private readonly ctx : AudioContext;
     private readonly gain : GainNode;
 
-    private oscillator : OscillatorNode | null = null;
+    // private oscillator : OscillatorNode | null = null;
     private baseSequence : number[][];
     private baseVolume : number;
     private type : OscillatorType;
@@ -87,7 +87,5 @@ export class Sample {
 
             osc.disconnect()
         }
-
-        this.oscillator = osc;
     }
 }

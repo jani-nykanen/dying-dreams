@@ -11,7 +11,7 @@ class Snowflake extends Particle {
     private size : 1 | 2;
 
     private speedFactor : Vector2;
-    private speedAngle = 0.0;
+    private speedAngle : number;
 
 
     constructor(x : number, y : number, size : 1 | 2) {
@@ -37,6 +37,8 @@ class Snowflake extends Particle {
         this.exist = true;
 
         this.size = size;
+
+        this.speedAngle = Math.random() * Math.PI * 2;
     }
 
 

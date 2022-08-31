@@ -20,11 +20,11 @@ export class TitleScreen implements Scene {
 
         this.startMenu = new Menu(
             [
-                new MenuButton("New Game", (event : CoreEvent) => {
+                new MenuButton("NEW GAME", (event : CoreEvent) => {
 
                     this.startGame(event);
                 }),
-                new MenuButton("Continue", (event : CoreEvent) => {
+                new MenuButton("CONTINUE", (event : CoreEvent) => {
 
                     let index = 1;
                     try {
@@ -38,7 +38,7 @@ export class TitleScreen implements Scene {
                     }
                     this.startGame(event, index);
                 }),
-                new MenuButton("Audio: Off", (event : CoreEvent) => {
+                new MenuButton("AUDIO: OFF", (event : CoreEvent) => {
 
                     event.audio.toggle();
                     this.startMenu.changeButtonText(2, event.audio.getStateString());
@@ -143,23 +143,19 @@ export class TitleScreen implements Scene {
 
     public redraw(canvas : Canvas) : void {
 
-        const CENTER_CORRECTION = -9;
-
         canvas.drawBitmap(canvas.getBitmap("background"), 0, -8)
               .setFillColor(0, 0, 0, 0.33)
               .fillRect();
               
         if (this.phase == 0) {
 
-            canvas.drawText(canvas.getBitmap("font"), "(c)2022 Jani Nyk@nen",
-                canvas.width/2 + CENTER_CORRECTION, 
-                canvas.height-20, 
-                -17, 0, TextAlign.Center);
+            canvas.drawText(canvas.getBitmap("font"), "(C)2022 JANI NYK@NEN",
+                canvas.width/2, canvas.height-10, 0, 0, TextAlign.Center);
 
             if (this.enterTimer >= 30) {
 
-                canvas.drawText(canvas.getBitmap("fontYellow"), "Press ENTER",
-                    canvas.width/2 + CENTER_CORRECTION, canvas.height/2 + 24, -17, 0, TextAlign.Center);
+                canvas.drawText(canvas.getBitmap("fontYellow"), "PRESS ENTER",
+                    canvas.width/2, canvas.height/2 + 28, 0, 0, TextAlign.Center);
             }
         }
         else {

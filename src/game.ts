@@ -7,6 +7,13 @@ import { Stage } from "./stage.js";
 import { TransitionType } from "./transition.js";
 
 
+const HINTS = [
+    "  HINT: USE ARROW KEYS TO MOVE.",
+    "  HINT: PRESS BACKSPACE TO UNDO.",
+    "  HINT: PRESS R TO RESTART."
+];
+
+
 export class Game implements Scene {
 
 
@@ -17,6 +24,8 @@ export class Game implements Scene {
 
     private pauseMenu : Menu;
 
+    private hintPos : number = 0.0;
+
 
     constructor() {
 
@@ -24,27 +33,27 @@ export class Game implements Scene {
 
         this.pauseMenu = new Menu(
             [
-                new MenuButton("Resume", () => this.pauseMenu.deactivate()),
+                new MenuButton("RESUME", () => this.pauseMenu.deactivate()),
 
-                new MenuButton("Restart", () => {
+                new MenuButton("RESTART", () => {
 
                     this.stage.restart();
                     this.pauseMenu.deactivate();
                 }),
 
-                new MenuButton("Undo", () => {
+                new MenuButton("UNDO", () => {
 
                     this.stage.undo();
                     this.pauseMenu.deactivate();
                 }),
 
-                new MenuButton("Audio: On ", (event : CoreEvent) => {
+                new MenuButton("AUDIO: ON ", (event : CoreEvent) => {
 
                     event.audio.toggle();
                     this.pauseMenu.changeButtonText(3, event.audio.getStateString());
                 }),
 
-                new MenuButton("Quit", (event : CoreEvent) => {
+                new MenuButton("QUIT", (event : CoreEvent) => {
 
                     this.pauseMenu.deactivate();
                     event.transition.activate(true, TransitionType.Fade,
@@ -86,12 +95,15 @@ export class Game implements Scene {
             this.stageIndex = Number(param);
             this.stage.changeStage(this.stageIndex, LEVEL_DATA[this.stageIndex-1]);
         }
+
+        this.hintPos = 0;
     }
 
 
     public update(event : CoreEvent) : void {
 
         const BACKGROUND_SPEED = 0.025;
+        const HINT_SPEED = 0.5;
 
         if (!this.pauseMenu.isActive()) {
             
@@ -113,6 +125,11 @@ export class Game implements Scene {
             event.audio.playSample(event.assets.getSample("pause"), 0.60);
             this.pauseMenu.activate(0);
             return;
+        }
+
+        if (this.stageIndex <= HINTS.length) {
+
+            this.hintPos = (this.hintPos + HINT_SPEED*event.step) % (HINTS[this.stageIndex-1].length * 8);
         }
 
         if (this.stage.update(event, event.assets)) {
@@ -141,6 +158,7 @@ export class Game implements Scene {
                     }
                     ++ this.stageIndex;
                     this.stage.changeStage(this.stageIndex, LEVEL_DATA[this.stageIndex-1]);
+                    this.hintPos = 0;
                 });
             }
         } 
@@ -157,6 +175,17 @@ export class Game implements Scene {
             canvas.setFillColor(0, 0, 0, 0.33)
                   .fillRect();
             this.pauseMenu.draw(canvas);
+        }
+
+        if (this.stageIndex <= HINTS.length) {
+
+            canvas.setFillColor(0, 0, 0, 0.33)
+                  .fillRect(0, 0, canvas.width, 10);
+            for (let i = 0; i < 2; ++ i) {
+
+                canvas.drawText(canvas.getBitmap("font"), HINTS[this.stageIndex-1], 
+                    -Math.floor(this.hintPos) + i * HINTS[this.stageIndex-1].length*8, 1, 0);
+            }
         }
     }
 }

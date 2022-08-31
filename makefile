@@ -32,6 +32,7 @@ minify: js_full
 	cat temp/out.js >> temp/index.html
 	cat misc/index_bottom.txt >> temp/index.html
 	cp b.png temp/b.png
+	cp f.png temp/f.png
 	rm temp/out.js
 
 pack: minify

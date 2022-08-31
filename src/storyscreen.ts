@@ -6,15 +6,15 @@ import { TransitionType } from "./transition";
 
 const STORY = [
     [
-        "You are having\nthe same\ndream again.",
-        "The dream where\neveryone must\ndie."
+        "YOU ARE HAVING\nTHE SAME\nDREAM AGAIN.",
+        "THE DREAM WHERE\nEVERYONE MUST\nDIE."
     ],
     [
-        "You wake up.",
-        "Everyone around\nyou is dead.",
-        "Everyone you\never cared\nabout.",
-        "Did you kill\nthem or were\nthey killed by\nyour dream?",
-        "That you will\nnever know."
+        "YOU WAKE UP.",
+        "EVERYONE AROUND\nYOU IS DEAD.",
+        "EVERYONE YOU\nEVER CARED\nABOUT.",
+        "DID YOU KILL\nTHEM OR WERE\nTHEY KILLED BY\nYOUR DREAM?",
+        "THAT YOU WILL\nNEVER KNOW."
     ]
 ];
 
@@ -121,8 +121,8 @@ export class StoryScreen implements Scene {
         // TODO: Way too many numeric constants here, make this cleaner
         // (i.e compute actual text location. If size permits...)
 
-        const XOFF = -15;
-        const YOFF = -8;
+        const XOFF = 0;
+        const YOFF = 2;
         const CORRECTION_X = -8;
         const CORRECTION_Y = -8;
 
@@ -139,8 +139,8 @@ export class StoryScreen implements Scene {
             return;
         }
 
-        let dx = canvas.width/2 - (this.maxLength * (24 + XOFF)) / 2 + CORRECTION_X;
-        let dy = canvas.height/2 - this.height * (24 + YOFF) / 2 + CORRECTION_Y;
+        let dx = canvas.width/2 - (this.maxLength * (8 + XOFF)) / 2 + CORRECTION_X;
+        let dy = canvas.height/2 - this.height * (8 + YOFF) / 2 + CORRECTION_Y;
 
         if ((this.textIndex > 0 || this.charIndex > 0) &&
             this.textIndex < STORY[this.phase].length) {
@@ -154,8 +154,8 @@ export class StoryScreen implements Scene {
         if (this.ready) {
 
             canvas.setFillColor(255)
-                  .fillRect(dx + this.maxLength * (24 + XOFF) + 4, 
-                  dy + this.height * (24 + YOFF) + 4 + rectY, 6, 6);
+                  .fillRect(dx + this.maxLength * (8 + XOFF) + 4, 
+                  dy + this.height * (8 + YOFF) + 4 + rectY, 6, 6);
         }
     }
 }

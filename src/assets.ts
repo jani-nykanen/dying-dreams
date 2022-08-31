@@ -1,9 +1,6 @@
 import { Bitmap } from "./canvas.js";
-import { CoreEvent } from "./core.js";
-import { createBackgroundBitmap } from "./background.js";
-import { generateFont, generateRGB222LookupTable, loadBitmapRGB222 } from "./bitmapgen.js";
-import { PALETTE1 } from "./palettedata.js";
-import { Ramp, Sample } from "./sample.js";
+import { loadBitmapRGB222, RGB222LookupTable } from "./bitmapgen.js";
+import { Sample } from "./sample.js";
 
 
 export class Assets {
@@ -12,7 +9,8 @@ export class Assets {
     private bitmaps : Map<string, Bitmap>;
     private samples : Map<string, Sample>;
 
-    private loaded : boolean = false;
+    private loaded : number = 0;
+    private loadCount : number = 0;
 
 
     constructor() {
@@ -22,82 +20,29 @@ export class Assets {
     }
 
 
-    private constructBitmaps() : void {
+    public addSample(name : string, s : Sample) : void {
 
-        let lookup = generateRGB222LookupTable();
+        this.samples.set(name, s);
+    }
 
-        this.bitmaps.set("base", loadBitmapRGB222("b.png", lookup, PALETTE1, () => {
 
-            this.loaded = true;
+    public addBitmap(name : string, b : Bitmap) : void {
+
+        this.bitmaps.set(name, b);
+    }
+
+
+    public loadBitmapRGB222(name : string, path : string, lookup : RGB222LookupTable, palette : number[][]) : void {
+
+        ++ this.loadCount;
+        this.addBitmap(name, loadBitmapRGB222(path, lookup, palette, () => {
+
+            ++ this.loaded;
         }));
-
-        this.bitmaps.set("background", createBackgroundBitmap(this, 160, 160, 8));
-        this.bitmaps.set("font", generateFont("12px Arial", 24, 24, 2, 8, 127));
-        this.bitmaps.set("fontYellow", generateFont("12px Arial", 24, 24, 2, 8, 127, [255, 255, 0]));
-        this.bitmaps.set("fontBig", generateFont("bold 24px Arial", 32, 32, 2, 8, 127, [170, 255, 0], true));
     }
 
 
-    private constructSamples(event : CoreEvent) : void {
-
-        this.samples.set("die",
-            event.audio.createSample(
-                [[192, 4], [144, 8], [128, 12]],
-                0.70, "square", Ramp.Exponential, 0.20
-            ));
-        this.samples.set("climb",
-            event.audio.createSample(
-                [[160, 4]],
-                0.70, "square", Ramp.Instant));
-        this.samples.set("toggle1",
-            event.audio.createSample(
-                [[160, 4], [192, 12]],
-                0.70, "square", Ramp.Instant, 0.35));
-        this.samples.set("toggle2",
-            event.audio.createSample(
-                [[192, 4], [160, 12]],
-                0.70, "square", Ramp.Instant, 0.35));       
-        this.samples.set("rumble",
-            event.audio.createSample(
-                [[224, 4], [160, 4], [192, 4], [160, 4],  [128, 12]],
-                0.80, "sawtooth", Ramp.Linear, 0.20
-            ));  
-        this.samples.set("boulder",
-            event.audio.createSample(
-                [[144, 8]],
-                1.0, "triangle", Ramp.Exponential, 0.20
-            ));    
-        this.samples.set("victory",
-            event.audio.createSample(
-                [[128, 12], [144, 12], [160, 12], [176, 12], [192, 12], [208, 60]],
-                0.60, "sawtooth", Ramp.Instant, 0.10
-            ));
-
-        this.samples.set("choose",
-            event.audio.createSample(
-                [[160, 6]],
-                0.70, "square", Ramp.Instant));
-        this.samples.set("select",
-            event.audio.createSample(
-                [[192, 10]],
-                0.70, "square", Ramp.Instant, 0.30));
-        this.samples.set("pause",
-            event.audio.createSample(
-                [[128, 4], [144, 6]],
-                0.70, "square", Ramp.Exponential));    
-    }
-
-
-    public construct(event : CoreEvent) : void {
-
-        // TODO: Construct assets "onstart" function in main.ts
-
-        this.constructBitmaps();
-        this.constructSamples(event);
-    }
-
-
-    public hasLoaded = () : boolean => this.loaded;
+    public hasLoaded = () : boolean => this.loaded >= this.loadCount;
 
 
     public getBitmap(name : string) : Bitmap | undefined {

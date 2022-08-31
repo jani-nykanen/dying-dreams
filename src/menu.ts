@@ -1,5 +1,4 @@
-import { Assets } from "./assets.js";
-import { Bitmap, Canvas, TextAlign } from "./canvas.js";
+import { Bitmap, Canvas } from "./canvas.js";
 import { CoreEvent } from "./core.js";
 import { KeyState } from "./keyboard.js";
 import { negMod } from "./math.js";
@@ -98,34 +97,35 @@ export class Menu {
     }
 
 
-    public draw(canvas : Canvas, x = 0, y = 0, xoff = -15, yoff = 12, boxAlpha = 0.67) {
+    public draw(canvas : Canvas, x = 0, y = 0, box = true) {
 
         const BOX_OFFSET = 4;
-        const MAGIC_XOFF = -4;
-        const MAGIC_YOFF = -6; // It's magic!
+        const XOFF = 0;
+        const YOFF = 10;
 
         if (!this.active) return;
 
         let font : Bitmap | undefined;
 
-        let w = this.maxLength * (24 + xoff);
-        let h = this.buttons.length * yoff;
+        let w = this.maxLength * (8 + XOFF);
+        let h = this.buttons.length * YOFF;
 
         let dx = x + canvas.width/2 - w/2;
         let dy = y + canvas.height/2 - h/2; 
 
-        canvas.setFillColor(0, 0, 0, boxAlpha)
-            .fillRect(dx - BOX_OFFSET, dy - BOX_OFFSET,
-                      w + BOX_OFFSET*2, h + BOX_OFFSET*2);
+        if (box) {
+
+            canvas.setFillColor(0, 0, 0, 0.67);
+            canvas.fillRect(dx - BOX_OFFSET, dy - BOX_OFFSET,
+                        w + BOX_OFFSET*2, h + BOX_OFFSET*2);
+        }
 
         for (let i = 0; i < this.buttons.length; ++ i) {
 
             font = canvas.getBitmap(i == this.cursorPos ? "fontYellow" : "font")
 
             canvas.drawText(font, this.buttons[i].getText(),
-                dx + MAGIC_XOFF, 
-                dy + i * yoff + MAGIC_YOFF, 
-                xoff, 0);
+                dx, dy + i * YOFF, XOFF, 0);
         } 
     }
 
