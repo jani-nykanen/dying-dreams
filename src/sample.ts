@@ -51,6 +51,14 @@ export class Sample {
         // Not working on Firefox, or after Closure, possibly because not
         // part of es2020 standard
         // this.gain.gain.cancelAndHoldAtTime(time);
+        try {
+
+            if (typeof(this.gain.gain["cancelAndHoldAtTime"]) == "function") {
+
+                this.gain.gain["cancelAndHoldAtTime"](time);
+            }
+        }
+        catch (e) {}
 
         osc.frequency.setValueAtTime(this.baseSequence[0][0], time);
         this.gain.gain.setValueAtTime(clamp(volume, 0.01, 1.0), time);

@@ -118,13 +118,8 @@ export class StoryScreen implements Scene {
 
     public redraw(canvas: Canvas) : void {
      
-        // TODO: Way too many numeric constants here, make this cleaner
-        // (i.e compute actual text location. If size permits...)
-
         const XOFF = 0;
         const YOFF = 2;
-        const CORRECTION_X = -8;
-        const CORRECTION_Y = -8;
 
         let font = canvas.getBitmap("font");
 
@@ -133,14 +128,13 @@ export class StoryScreen implements Scene {
         if (this.isEnding) {
 
             canvas.drawText(font, "THE END", 
-                canvas.width/2 + CORRECTION_X, 
-                canvas.height/2 + CORRECTION_Y, 
+                canvas.width/2, canvas.height/2-4, 
                 XOFF, 0, TextAlign.Center);
             return;
         }
 
-        let dx = canvas.width/2 - (this.maxLength * (8 + XOFF)) / 2 + CORRECTION_X;
-        let dy = canvas.height/2 - this.height * (8 + YOFF) / 2 + CORRECTION_Y;
+        let dx = canvas.width/2 - (this.maxLength * (8 + XOFF)) / 2;
+        let dy = canvas.height/2 - this.height * (8 + YOFF) / 2;
 
         if ((this.textIndex > 0 || this.charIndex > 0) &&
             this.textIndex < STORY[this.phase].length) {

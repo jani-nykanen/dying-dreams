@@ -14,9 +14,12 @@ export class TitleScreen implements Scene {
     private phase = 0;
     private enterTimer = 29;
     private waveTimer = 0;
+    private batTimers : Array<number>;
 
 
     constructor() {
+
+        this.batTimers = (new Array<number> (7)).fill(0.0);
 
         this.startMenu = new Menu(
             [
@@ -48,8 +51,6 @@ export class TitleScreen implements Scene {
 
     
     private startGame(event : CoreEvent, index = 1) : void {
-
-        
 
         event.transition.activate(true, TransitionType.Circle, 1.0/30.0,
             (event : CoreEvent) => {
@@ -98,6 +99,33 @@ export class TitleScreen implements Scene {
     }
 
 
+    private drawBats(canvas : Canvas) : void {
+
+        const POS_Y = [32, 80, 96, 64, 120, 76, 48];
+        const POS_X = [32, 16, 56, 72, 108, 128, 144];
+        const AMPLITUDE = [4, 8, 6, 16, 6, 12, 4];
+
+        let bmp = canvas.getBitmap("base");
+        let dx : number;
+        let dy : number;
+
+        let frame : number;
+        let w : number;
+
+        for (let i = 0; i < POS_X.length; ++ i) {
+
+            dx = (Math.round((POS_X[i] - 8 + this.batTimers[i])) % 176) - 16;
+            w = this.waveTimer + i * (Math.PI*2 / 6);
+            dy = POS_Y[i] - 4 + Math.round(Math.sin(w) * AMPLITUDE[i]);
+
+            frame = (this.batTimers[i] % 8) < 4 ? 0 : 1;
+
+            canvas.drawBitmapRegion(bmp, 96, 32 + frame*8, 16, 8,
+                dx, dy);
+        }
+    }
+
+
     public init(param : any, event : CoreEvent) : void {
 
         this.startMenu.activate(0);
@@ -117,8 +145,14 @@ export class TitleScreen implements Scene {
     public update(event : CoreEvent) : void {
 
         const WAVE_SPEED = Math.PI / 60;
+        const BAT_SPEED = [0.30, 0.5, 0.33, 0.75, 0.40, 0.60, 0.25];
 
         this.waveTimer = (this.waveTimer + WAVE_SPEED*event.step) % (Math.PI*2);
+
+        for (let i = 0; i < this.batTimers.length; ++ i) {
+            
+            this.batTimers[i] = (this.batTimers[i] + BAT_SPEED[i]*event.step) % (event.screenWidth+16);
+        }
 
         if (event.transition.isActive())
             return;
@@ -146,11 +180,13 @@ export class TitleScreen implements Scene {
         canvas.drawBitmap(canvas.getBitmap("background"), 0, -8)
               .setFillColor(0, 0, 0, 0.33)
               .fillRect();
+
+        this.drawBats(canvas);
               
         if (this.phase == 0) {
 
             canvas.drawText(canvas.getBitmap("font"), "(C)2022 JANI NYK@NEN",
-                canvas.width/2, canvas.height-10, 0, 0, TextAlign.Center);
+                canvas.width/2, canvas.height-9, 0, 0, TextAlign.Center);
 
             if (this.enterTimer >= 30) {
 
