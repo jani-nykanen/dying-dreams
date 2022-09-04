@@ -10,7 +10,8 @@ import { TransitionType } from "./transition.js";
 const HINTS = [
     "  HINT: USE ARROW KEYS TO MOVE.",
     "  HINT: PRESS BACKSPACE TO UNDO.",
-    "  HINT: PRESS R TO RESTART."
+    "  HINT: PRESS R TO RESTART.",
+    "  HINT: PRESS ENTER TO PAUSE."
 ];
 
 
