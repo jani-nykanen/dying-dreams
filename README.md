@@ -26,7 +26,17 @@ The command `make levels` will convert the levels to the source code format.
 
 ## License
 
-I... don't know. Do not steal if you really don't have to? Not for commercial use, that's for sure.
+Since I couldn't find a suitable license for this project, let me introduce you "Dying Dreams js13k license":
+
+### Things you can do:
+- Use the code or the assets in your own projects, as long as your project is open-source and you remember attribute the original author
+- Modify this project and share the modified version, as long as the modified code is open source and you give credit to the original author
+
+
+### Things you may **not** do:
+- Use parts of this project in a commercial product
+- Use parts of this project in a closed-source project
+- Use parts of this project without attributing the original author
 
 
 ------
