@@ -62,6 +62,7 @@ export class Stage {
             this.baseTilemap,
             this.baseTilemap.map(v => Number(DYNAMIC_TILES.includes(v)) * v),
             this.width, this.height, Flip.None);
+        this.states.push(this.activeState.clone());
         this.oldState = this.activeState.clone();
 
         this.moveData = (new Array<Direction> (this.width*this.height)).fill(Direction.None);
@@ -853,7 +854,7 @@ export class Stage {
 
     public undo() : void {
 
-        let s = this.states.pop();
+        let s = this.moving ? this.oldState : this.states.pop();
         if (s == null)
             return;
 
@@ -975,6 +976,7 @@ export class Stage {
             this.baseTilemap,
             this.baseTilemap.map(v => Number(DYNAMIC_TILES.includes(v)) * v),
             this.width, this.height, Flip.None);
+        this.states.push(this.activeState.clone());
         this.oldState = this.activeState.clone();
 
         this.moveData.fill(Direction.None);
